@@ -1,0 +1,70 @@
+/* src/components/Footer.css */
+
+.footer {
+  background-color: #343a40;
+  color: #f8f9fa;
+  padding: 3rem 2rem 0;
+  margin-top: 4rem; /* Pushes footer down from content */
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2rem;
+  padding-bottom: 2rem;
+}
+
+.footer-about, .footer-links {
+  flex: 1;
+  min-width: 250px;
+}
+
+.footer-about h4 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.footer-about p {
+  color: #ced4da;
+  line-height: 1.6;
+}
+
+.footer-links h4 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.footer-links ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-links li {
+  margin-bottom: 0.5rem;
+}
+
+.footer-links a {
+  text-decoration: none;
+  color: #ced4da;
+  transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: #fff;
+}
+
+.footer-bottom {
+  text-align: center;
+  padding: 1.5rem 0;
+  border-top: 1px solid #495057;
+  margin-top: 2rem;
+}
+
+.footer-bottom p {
+  margin: 0;
+  color: #adb5bd;
+}

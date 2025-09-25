@@ -1,0 +1,48 @@
+/* src/pages/CompanyPage.css */
+
+.company-header {
+  display: flex;
+  align-items: center;
+  padding: 3rem 2rem;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.company-header-logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-right: 2rem;
+  background-color: white;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.company-header-info h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 2.5rem;
+}
+
+.company-header-info p {
+  margin: 0;
+  color: #6c757d;
+  max-width: 600px;
+}
+
+.loading-text {
+  text-align: center;
+  padding: 4rem;
+  font-size: 1.5rem;
+  color: #6c757d;
+}
+
+.login-prompt {
+  text-align: center;
+  margin: 3rem auto;
+  padding: 2rem;
+  max-width: 700px;
+  background-color: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+}
