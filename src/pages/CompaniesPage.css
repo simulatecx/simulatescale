@@ -1,74 +1,50 @@
-/* src/pages/CompaniesPage.css */
-
 .companies-page-container {
   max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
+  margin: 40px auto;
+  padding: 20px;
 }
 
 .companies-header {
   text-align: center;
-  padding: 2rem 0;
-  margin-bottom: 2rem;
+  margin-bottom: 40px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
 }
 
 .companies-header h1 {
   font-size: 2.5rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 10px;
+  color: #333;
 }
 
 .companies-header p {
   font-size: 1.1rem;
-  color: #6c757d;
+  color: #666;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
-.search-container {
-  margin-top: 1.5rem;
-}
-
-.search-container input {
-  width: 100%;
-  max-width: 400px;
-  padding: 0.8rem;
-  font-size: 1rem;
-  border: 1px solid #ced4da;
-  border-radius: 5px;
-}
-
-.companies-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1.5rem;
-}
-
-.company-list-card {
+/* --- NEW SEARCH BAR STYLES --- */
+.search-bar-container {
+  margin-top: 30px;
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
-  padding: 2rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background-color: #fff;
-  text-decoration: none;
-  color: #333;
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
-  text-align: center;
 }
 
-.company-list-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-5px);
+.search-input {
+  width: 100%;
+  max-width: 500px;
+  padding: 12px 20px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 50px; /* Pill shape */
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
 }
 
-.company-list-card img {
-  width: 60px;
-  height: 60px;
-  object-fit: contain;
-  margin-bottom: 1rem;
-}
-
-.company-list-card h3 {
-  margin: 0;
-  font-size: 1.2rem;
+.search-input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
 }

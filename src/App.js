@@ -1,30 +1,33 @@
-// src/App.js
+import { Routes, Route } from 'react-router-dom';
 
-import React from 'react';
-import { Routes, Route } from 'react-router-dom'; // Import Routes and Route
+// pages & components
 import HomePage from './pages/HomePage';
-import CompanyPage from './pages/CompanyPage'; // Import our new page
-import SignUpPage from './pages/SignUpPage';
 import LoginPage from './pages/LoginPage';
-import CompaniesPage from './pages/CompaniesPage'; // 1. Import the new page
-import Footer from './components/Footer'; // 1. Import the Footer
+import SignUpPage from './pages/SignUpPage';
+import CompaniesPage from './pages/CompaniesPage';
+import CompanyPage from './pages/CompanyPage';
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 
 function App() {
   return (
+    // The <Router> component has been removed from this file.
+    // It is already provided in your src/index.js file.
     <div className="App">
-      {/* The main content area that changes based on the route */}
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/companies" element={<CompaniesPage />} />
-        <Route path="/company/:companyId" element={<CompanyPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
-        <Route path="/login" element={<LoginPage />} />
-      </Routes>
-
-      {/* 2. Add the Footer outside the Routes */}
+      <Navbar />
+      <div className="content">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/companies" element={<CompaniesPage />} />
+          <Route path="/company/:id" element={<CompanyPage />} />
+        </Routes>
+      </div>
       <Footer />
     </div>
   );
 }
 
 export default App;
+

@@ -1,16 +1,14 @@
-// src/pages/HomePage.js
-
 import React from 'react';
-import Navbar from '../components/Navbar';
 import HeroSection from '../components/HeroSection';
-import CompanyList from '../components/CompanyList'; // <-- Import CompanyList
+import CompanyList from '../components/CompanyList';
 
 const HomePage = () => {
   return (
+    // The <Navbar /> component has been removed from this page.
+    // It is now rendered only once in your main App.js file.
     <div>
-      <Navbar />
       <HeroSection />
-      <CompanyList /> {/* <-- Add it here */}
+      <CompanyList />
     </div>
   );
 };

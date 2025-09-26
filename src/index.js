@@ -1,19 +1,21 @@
-// src/index.js
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
-import { BrowserRouter } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext'; // 1. Import AuthProvider
+import reportWebVitals from './reportWebVitals';
+import { BrowserRouter as Router } from 'react-router-dom';
+import { AuthContextProvider } from './context/AuthContext'; // Corrected import name
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <AuthProvider> {/* 2. Wrap the app */}
-      <BrowserRouter>
+    <Router>
+      {/* Use the correct provider name */}
+      <AuthContextProvider>
         <App />
-      </BrowserRouter>
-    </AuthProvider>
+      </AuthContextProvider>
+    </Router>
   </React.StrictMode>
 );
+
+reportWebVitals();

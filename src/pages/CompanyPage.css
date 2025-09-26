@@ -1,48 +1,158 @@
-/* src/pages/CompanyPage.css */
+.company-page-container {
+  max-width: 1400px;
+  margin: 40px auto;
+  padding: 20px;
+  background-color: #f8f9fa; /* Light grey background for the whole page */
+}
 
 .company-header {
-  display: flex;
-  align-items: center;
-  padding: 3rem 2rem;
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #e0e0e0;
+  text-align: center;
+  margin-bottom: 40px;
+  padding: 30px 20px;
 }
 
-.company-header-logo {
-  width: 80px;
-  height: 80px;
-  object-fit: contain;
-  margin-right: 2rem;
-  background-color: white;
-  padding: 10px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+.company-header h1 {
+  font-size: 3.5rem;
+  margin-bottom: 10px;
+  color: #2c3e50;
 }
 
-.company-header-info h1 {
-  margin: 0 0 0.5rem 0;
-  font-size: 2.5rem;
-}
-
-.company-header-info p {
+.company-header p.company-meta {
+  font-size: 1.2rem;
+  color: #7f8c8d;
   margin: 0;
-  color: #6c757d;
-  max-width: 600px;
 }
 
-.loading-text {
-  text-align: center;
-  padding: 4rem;
-  font-size: 1.5rem;
-  color: #6c757d;
+.company-main-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 30px;
+  align-items: flex-start;
 }
 
-.login-prompt {
-  text-align: center;
-  margin: 3rem auto;
-  padding: 2rem;
-  max-width: 700px;
-  background-color: #f8f9fa;
+.company-details-column, .company-sidebar-column {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.company-sidebar-column {
+  position: sticky;
+  top: 20px;
+}
+
+.detail-card {
+  background-color: #ffffff;
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s ease;
+}
+
+.detail-card:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.detail-card h2 {
+  font-size: 1.6rem;
+  margin-top: 0;
+  margin-bottom: 25px;
+  color: #34495e;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 15px;
+  display: inline-block;
+}
+
+/* Negotiation Insights Card */
+.negotiation-card {
+  background: #ffffff;
+  border-left: 5px solid #28a745; /* Green accent */
+}
+
+.insight-item h4 {
+  margin: 0 0 8px 0;
+  font-size: 1rem;
+  color: #555;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.insight-item p {
+  margin: 0 0 10px 0;
+  font-size: 3rem;
+  font-weight: 700;
+  color: #28a745;
+}
+
+.insight-item span {
+  font-size: 0.9rem;
+  color: #888;
+  font-style: italic;
+}
+
+.insight-item-notes {
+  margin-top: 20px;
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+}
+
+.insight-item-notes p {
+  font-size: 1rem;
+  color: #333;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Info Table (for Uses and Competitors) */
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.info-table th,
+.info-table td {
+  padding: 15px;
+  text-align: left;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.info-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #495057;
+}
+
+.info-table td {
+  font-size: 1rem;
+  color: #333;
+}
+
+.info-table .info-title {
+  font-weight: bold;
+  width: 30%;
+}
+
+.info-table tr:last-child td {
+  border-bottom: none;
+}
+
+.login-prompt-small {
+  text-align: center;
+  padding: 20px;
+}
+.login-prompt-small p {
+    font-size: 1rem;
+    color: #666;
+}
+
+@media (max-width: 992px) {
+  .company-main-content {
+    grid-template-columns: 1fr;
+  }
+  .company-sidebar-column {
+    position: static;
+  }
 }

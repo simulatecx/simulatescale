@@ -1,66 +1,69 @@
-// src/pages/LoginPage.js
-
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebase/config';
-import Navbar from '../components/Navbar';
-import './AuthPage.css'; // We can reuse the same styles
+
+// Import the shared styles
+import './AuthPage.css';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
+  const [isPending, setIsPending] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setError('');
-
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setIsPending(true);
+    
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log('User signed in:', userCredential.user);
-      // Redirect to the home page after successful login
-      navigate('/');
+      const auth = getAuth();
+      await signInWithEmailAndPassword(auth, email, password);
+      setIsPending(false);
+      navigate('/'); 
     } catch (err) {
-      // Handle errors (e.g., wrong password, user not found)
       setError(err.message);
-      console.error('Firebase login error:', err);
+      setIsPending(false);
     }
   };
 
   return (
-    <div>
-      <Navbar />
-      <div className="auth-container">
-        <div className="auth-form">
-          <h2>Log In to Your Account</h2>
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label>Email Address</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            {error && <p className="error-message">{error}</p>}
-            <button type="submit" className="submit-button">Log In</button>
+    <div className="auth-page-wrapper">
+      <aside className="auth-sidebar">
+        <h1>Stop Overpaying.</h1>
+        <p>Access real-time, anonymous pricing data to ensure you get the best deal on your next software purchase.</p>
+      </aside>
+      <main className="auth-main-content">
+        <div className="auth-form-container">
+          <h2>Welcome Back</h2>
+          <p>Sign in to your account to continue.</p>
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <label>Email</label>
+            <input
+              type="email"
+              onChange={(e) => setEmail(e.target.value)}
+              value={email}
+              required
+              placeholder="name@company.com"
+            />
+            <label>Password</label>
+            <input
+              type="password"
+              onChange={(e) => setPassword(e.target.value)}
+              value={password}
+              required
+              placeholder="••••••••"
+            />
+            {!isPending && <button className="auth-button">Sign In</button>}
+            {isPending && <button className="auth-button" disabled>Loading...</button>}
+            {error && <div className="error">{error}</div>}
           </form>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
 
 export default LoginPage;
+

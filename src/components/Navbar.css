@@ -1,52 +1,101 @@
-/* src/components/Navbar.css */
-
+/* navbar styles */
 .navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2rem;
+  width: 100%;
+  padding: 20px 40px;
+  box-sizing: border-box;
   background-color: #fff;
-  border-bottom: 1px solid #e0e0e0;
-  height: 60px;
+  border-bottom: 1px solid #eaeaea;
+  display: flex;
+  justify-content: center;
 }
-
-.navbar-logo a {
-  text-decoration: none;
-  color: #1a1a1a;
+.navbar ul {
+  display: flex;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0;
+  list-style-type: none;
+}
+.navbar .logo {
   font-weight: bold;
-  font-size: 1.5rem;
+  font-size: 1.2em;
+  color: #333;
+  letter-spacing: 1px;
+  margin-right: auto;
 }
-
-.navbar-links {
-  list-style: none;
+.navbar .logo a {
+  text-decoration: none;
+  color: inherit;
+}
+.navbar a {
+  color: #333;
+  text-decoration: none;
+  margin-left: 20px;
+}
+.navbar li {
   display: flex;
   align-items: center;
+}
+/* search bar styles */
+.search-container {
+  position: relative;
+  margin: 0 20px;
+}
+
+.search-input {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 250px;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+.search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  list-style-type: none;
   margin: 0;
   padding: 0;
+  z-index: 1000;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
-.navbar-links li {
-  margin-left: 1.5rem;
+.search-results li {
+  padding: 10px 15px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
 }
 
-.navbar-links a {
-  text-decoration: none;
-  color: #333;
-  font-weight: 500;
+.search-results li:last-child {
+  border-bottom: none;
 }
 
-.navbar-button-primary, .navbar-button-secondary {
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
-  text-align: center;
-}
-
-.navbar-button-primary {
-  background-color: #007bff;
-  color: #fff;
-}
-
-.navbar-button-secondary {
+.search-results li:hover {
   background-color: #f0f0f0;
-  color: #333;
+}
+
+/* General button style from other files */
+.btn {
+  background: #007bff;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1em;
+  border: none;
+  margin-left: 20px;
 }

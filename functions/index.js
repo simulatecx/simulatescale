@@ -1,27 +1,45 @@
-// functions/index.js
-
-const {onCreate} = require("firebase-functions/v2/auth");
-const {initializeApp} = require("firebase-admin/app");
-const {getFirestore} = require("firebase-admin/firestore");
+// Import the correct function from the 'identity' module
+const { beforeUserCreated } = require("firebase-functions/v2/identity");
+const { initializeApp } = require("firebase-admin/app");
+const { getFirestore } = require("firebase-admin/firestore");
+const { logger } = require("firebase-functions"); // Import the logger
 
 // Initialize the Firebase Admin SDK
 initializeApp();
 
 /**
- * Creates a user profile in Firestore when a new user signs up.
+ * Creates a user profile in Firestore before a new user is saved to Auth.
  */
-exports.createUserProfile = onCreate((user) => {
-  const newUser = {
-    email: user.data.email,
-    uid: user.data.uid,
-    tier: "free",
-    hasContributed: false,
-    createdAt: new Date(),
-  };
+exports.createUserProfile = beforeUserCreated(async (user) => {
+  logger.info("Function triggered: createUserProfile", { uid: user.data.uid });
 
-  // Get a reference to the Firestore database
-  const db = getFirestore();
+  try {
+    const { email, uid } = user.data;
 
-  // Create the document in the 'users' collection
-  return db.collection("users").doc(user.data.uid).set(newUser);
+    if (!uid || !email) {
+      logger.error("User data missing UID or email.", user.data);
+      // You can't stop the user creation here, but you can log the error.
+      return; 
+    }
+
+    const newUser = {
+      email: email,
+      uid: uid,
+      tier: "free",
+      hasContributed: false,
+      createdAt: new Date(),
+    };
+
+    logger.info("Attempting to create user document with data:", newUser);
+
+    const db = getFirestore();
+    await db.collection("users").doc(uid).set(newUser);
+    
+    logger.info("Successfully created user document in Firestore for UID:", uid);
+
+  } catch (error) {
+    logger.error("Error creating user profile in Firestore:", error);
+    // Even if this fails, the user will still be created in Auth.
+    // This log is critical for debugging.
+  }
 });

@@ -1,50 +1,130 @@
-// src/components/Navbar.js
-
-import React from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { auth, db } from '../firebase/config';
 import { signOut } from 'firebase/auth';
-import { auth } from '../firebase/config';
-import { useAuth } from '../context/AuthContext'; // Import our custom hook
+import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { useAuthContext } from '../context/AuthContext'; // Corrected import name
+
+// styles
 import './Navbar.css';
 
-const Navbar = () => {
-  const { currentUser } = useAuth(); // Get the current user from the context
+export default function Navbar() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [showResults, setShowResults] = useState(false);
+  const { user } = useAuthContext(); // Corrected hook name
   const navigate = useNavigate();
+  const searchContainerRef = useRef(null);
 
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth);
-      // Redirect to home page after sign out
-      navigate('/');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+        setShowResults(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    const fetchResults = async () => {
+      if (searchTerm.trim() === '') {
+        setSearchResults([]);
+        setShowResults(false);
+        return;
+      }
+
+      const searchTermLower = searchTerm.toLowerCase();
+      const companiesRef = collection(db, 'companies');
+      const q = query(
+        companiesRef,
+        where('companyNameLower', '>=', searchTermLower),
+        where('companyNameLower', '<=', searchTermLower + '\uf8ff'),
+        orderBy('companyNameLower'),
+        limit(5)
+      );
+
+      try {
+        const querySnapshot = await getDocs(q);
+        const results = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setSearchResults(results);
+        setShowResults(true);
+      } catch (error) {
+        console.error("Error searching companies:", error);
+      }
+    };
+
+    const debounceTimeout = setTimeout(() => {
+      fetchResults();
+    }, 300); // Debounce API calls
+
+    return () => clearTimeout(debounceTimeout);
+  }, [searchTerm]);
+
+  const handleLogout = () => {
+    signOut(auth)
+      .then(() => {
+        // Sign-out successful. AuthContext will handle state update.
+        navigate('/');
+      })
+      .catch((error) => {
+        console.error('Logout error:', error);
+      });
+  };
+
+  const handleResultClick = (id) => {
+    setSearchTerm('');
+    setShowResults(false);
+    navigate(`/company/${id}`);
   };
 
   return (
     <nav className="navbar">
-      <div className="navbar-logo">
-        <Link to="/">PriceTransparent</Link>
-      </div>
-      <ul className="navbar-links">
-        <li><Link to="/companies">Companies</Link></li>
-        
-        {/* Conditional Rendering: Show different links based on user status */}
-        {currentUser ? (
-          // If user is logged in
+      <ul>
+        <li className="logo">
+          <Link to="/">
+            <span>SimulateScale</span>
+          </Link>
+        </li>
+
+        <li className="search-container" ref={searchContainerRef}>
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search for a company..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {showResults && searchResults.length > 0 && (
+            <ul className="search-results">
+              {searchResults.map((company) => (
+                <li key={company.id} onClick={() => handleResultClick(company.id)}>
+                  {company.companyName}
+                </li>
+              ))}
+            </ul>
+          )}
+        </li>
+
+        {!user && (
           <>
-            <li><button onClick={handleSignOut} className="navbar-button-secondary">Sign Out</button></li>
+            <li><Link to="/login">Login</Link></li>
+            <li><Link to="/signup">Signup</Link></li>
           </>
-        ) : (
-          // If user is not logged in
+        )}
+
+        {user && (
           <>
-            <li><Link to="/login" className="navbar-button-secondary">Sign In</Link></li>
-            <li><Link to="/signup" className="navbar-button-primary">Sign Up</Link></li>
+            <li>Hello, {user.email}</li>
+            <li>
+              <button className="btn btn-logout" onClick={handleLogout}>Logout</button>
+            </li>
           </>
         )}
       </ul>
     </nav>
   );
-};
-
-export default Navbar;
+}

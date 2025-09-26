@@ -1,42 +1,66 @@
-// src/context/AuthContext.js
-
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import { createContext, useReducer, useEffect, useContext } from 'react'; // Import useContext
+import { auth, db } from '../firebase/config';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../firebase/config';
+import { doc, getDoc } from 'firebase/firestore';
 
-// 1. Create the context
-const AuthContext = createContext();
+export const AuthContext = createContext();
 
-// 2. Create a custom hook to use the context easily
-export const useAuth = () => {
-  return useContext(AuthContext);
+export const authReducer = (state, action) => {
+  switch (action.type) {
+    case 'LOGIN':
+      return { ...state, user: action.payload };
+    case 'LOGOUT':
+      return { ...state, user: null };
+    case 'AUTH_IS_READY':
+      return { ...state, user: action.payload, authIsReady: true };
+    default:
+      return state;
+  }
 };
 
-// 3. Create the Provider component
-export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+export const AuthContextProvider = ({ children }) => {
+  const [state, dispatch] = useReducer(authReducer, { 
+    user: null,
+    authIsReady: false
+  });
 
   useEffect(() => {
-    // onAuthStateChanged is a Firebase listener that runs whenever
-    // the user's login state changes (login, logout).
-    const unsubscribe = onAuthStateChanged(auth, user => {
-      setCurrentUser(user);
-      setLoading(false);
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const docRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const userProfile = { ...user, ...docSnap.data() };
+          dispatch({ type: 'AUTH_IS_READY', payload: userProfile });
+        } else {
+          console.error("Critical Error: User profile not found in Firestore for UID:", user.uid);
+          dispatch({ type: 'AUTH_IS_READY', payload: user });
+        }
+      } else {
+        dispatch({ type: 'AUTH_IS_READY', payload: null });
+      }
     });
 
-    // Cleanup subscription on unmount
-    return unsubscribe;
+    return () => unsub();
   }, []);
 
-  const value = {
-    currentUser
-  };
+  console.log('AuthContext state:', state);
 
-  // We don't render the app until the initial auth check is complete
   return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
+    <AuthContext.Provider value={{ ...state, dispatch }}>
+      { children }
     </AuthContext.Provider>
   );
 };
+
+// ADD THIS EXPORTED HOOK
+// This custom hook makes it easy to use the auth context in other components
+export const useAuthContext = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw Error('useAuthContext must be used inside an AuthContextProvider');
+  }
+  return context;
+};
+

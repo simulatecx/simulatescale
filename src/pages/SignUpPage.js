@@ -1,67 +1,69 @@
-// src/pages/SignUpPage.js
-
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebase/config';
-import Navbar from '../components/Navbar';
-import './AuthPage.css'; // We'll create a shared CSS file for login/signup
+
+// Import the shared styles
+import './AuthPage.css';
 
 const SignUpPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
+  const [isPending, setIsPending] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setError(''); // Clear previous errors
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setIsPending(true);
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      // User is signed up and automatically logged in.
-      console.log('User created:', userCredential.user);
-      // Redirect to the home page after successful signup
-      navigate('/');
+      const auth = getAuth();
+      await createUserWithEmailAndPassword(auth, email, password);
+      setIsPending(false);
+      navigate('/'); 
     } catch (err) {
-      // Handle errors (e.g., email already in use, weak password)
       setError(err.message);
-      console.error('Firebase signup error:', err);
+      setIsPending(false);
     }
   };
 
   return (
-    <div>
-      <Navbar />
-      <div className="auth-container">
-        <div className="auth-form">
+    <div className="auth-page-wrapper">
+      <aside className="auth-sidebar">
+        <h1>Get Price Smart.</h1>
+        <p>Join a community of procurement professionals sharing anonymous pricing data to level the playing field.</p>
+      </aside>
+      <main className="auth-main-content">
+        <div className="auth-form-container">
           <h2>Create Your Account</h2>
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label>Email Address</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            {error && <p className="error-message">{error}</p>}
-            <button type="submit" className="submit-button">Sign Up</button>
+          <p>Join our community to view and contribute data.</p>
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <label>Email</label>
+            <input
+              type="email"
+              onChange={(e) => setEmail(e.target.value)}
+              value={email}
+              required
+              placeholder="name@company.com"
+            />
+            <label>Password</label>
+            <input
+              type="password"
+              onChange={(e) => setPassword(e.target.value)}
+              value={password}
+              required
+              placeholder="6+ characters"
+            />
+            {!isPending && <button className="auth-button">Create Account</button>}
+            {isPending && <button className="auth-button" disabled>Creating...</button>}
+            {error && <div className="error">{error}</div>}
           </form>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
 
 export default SignUpPage;
+

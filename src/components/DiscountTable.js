@@ -1,10 +1,7 @@
-// src/components/DiscountTable.js
-
 import React from 'react';
 import './DiscountTable.css';
 
 const DiscountTable = ({ discounts }) => {
-  // The loading and empty states are now handled by the parent CompanyPage
   if (!discounts || discounts.length === 0) {
     return (
         <div className="table-container">
@@ -15,7 +12,7 @@ const DiscountTable = ({ discounts }) => {
 
   return (
     <div className="table-container">
-      <h2>Recent Discount Submissions</h2>
+      {/* This component no longer needs its own h2 title */}
       <table>
         <thead>
           <tr>
@@ -35,7 +32,8 @@ const DiscountTable = ({ discounts }) => {
               <td>${discount.actualPrice.toLocaleString()}</td>
               <td>
                 <span className="discount-badge">
-                  {discount.discountPercentage.toFixed(1)}%
+                  {/* THIS IS THE FIX: Check if discount.discount exists and is a number before calling toFixed */}
+                  {typeof discount.discount === 'number' ? `${discount.discount.toFixed(1)}%` : 'N/A'}
                 </span>
               </td>
             </tr>
