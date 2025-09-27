@@ -1,0 +1,14 @@
+{
+  "..\\src\\context\\AuthContext.js -> firebase/auth": {
+    "id": "..\\src\\context\\AuthContext.js -> firebase/auth",
+    "files": [
+      "static/chunks/node_modules_firebase_auth_dist_esm_index_esm_js.js"
+    ]
+  },
+  "..\\src\\context\\AuthContext.js -> firebase/firestore": {
+    "id": "..\\src\\context\\AuthContext.js -> firebase/firestore",
+    "files": [
+      "static/chunks/node_modules_firebase_firestore_dist_esm_index_esm_js.js"
+    ]
+  }
+}

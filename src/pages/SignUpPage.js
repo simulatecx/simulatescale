@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 
-// Import the shared styles
-import './AuthPage.css';
 
 const SignUpPage = () => {
   const [email, setEmail] = useState('');

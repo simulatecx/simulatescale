@@ -1,47 +1,49 @@
-import React from 'react';
-import './DiscountTable.css';
+import { useState, useEffect } from 'react';
+import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
+import { useAuth } from '../context/AuthContext';
 
-const DiscountTable = ({ discounts }) => {
-  if (!discounts || discounts.length === 0) {
-    return (
-        <div className="table-container">
-            <p>No discounts have been submitted for this company yet. Be the first!</p>
-        </div>
-    );
-  }
+export default function DiscountTable({ companyId }) {
+  const [discounts, setDiscounts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { db } = useAuth(); // Get db from context
+
+  useEffect(() => {
+    if (!db) return; // Wait for db to be available
+
+    const q = query(collection(db, 'companies', companyId, 'discounts'), orderBy('createdAt', 'desc'));
+    
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      setDiscounts(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching discounts:", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [companyId, db]); // Rerun when db is available
+
+  if (loading) return <p>Loading discount data...</p>;
+  if (discounts.length === 0) return <p>No discount data has been shared yet. Be the first!</p>;
 
   return (
-    <div className="table-container">
-      {/* This component no longer needs its own h2 title */}
-      <table>
-        <thead>
-          <tr>
-            <th>Product / Tier</th>
-            <th>Company Size</th>
-            <th>List Price (Annual)</th>
-            <th>Actual Price (Annual)</th>
-            <th>Discount %</th>
+    <table className="discount-table">
+      <thead>
+        <tr>
+          <th>Discount (%)</th>
+          <th>Term</th>
+          <th>Date of Deal</th>
+        </tr>
+      </thead>
+      <tbody>
+        {discounts.map(discount => (
+          <tr key={discount.id}>
+            <td>{discount.amount}%</td>
+            <td>{discount.term}</td>
+            <td>{discount.date}</td>
           </tr>
-        </thead>
-        <tbody>
-          {discounts.map(discount => (
-            <tr key={discount.id}>
-              <td>{discount.product}</td>
-              <td>{discount.companySize}</td>
-              <td>${discount.listPrice.toLocaleString()}</td>
-              <td>${discount.actualPrice.toLocaleString()}</td>
-              <td>
-                <span className="discount-badge">
-                  {/* THIS IS THE FIX: Check if discount.discount exists and is a number before calling toFixed */}
-                  {typeof discount.discount === 'number' ? `${discount.discount.toFixed(1)}%` : 'N/A'}
-                </span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+        ))}
+      </tbody>
+    </table>
   );
-};
-
-export default DiscountTable;
+}
