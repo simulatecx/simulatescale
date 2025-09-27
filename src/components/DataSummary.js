@@ -1,7 +1,6 @@
 // src/components/DataSummary.js
 
 import React from 'react';
-import './DataSummary.css';
 
 const DataSummary = ({ discounts }) => {
   // Don't render anything if there are no discounts

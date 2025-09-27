@@ -11,9 +11,6 @@ import DataSummary from '../components/DataSummary';
 // context
 import { useAuthContext } from '../context/AuthContext';
 
-// styles
-import './CompanyPage.css';
-
 const CompanyPage = () => {
   const { id } = useParams();
   const [company, setCompany] = useState(null);

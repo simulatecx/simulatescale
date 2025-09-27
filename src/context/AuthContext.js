@@ -1,66 +1,62 @@
-import { createContext, useReducer, useEffect, useContext } from 'react'; // Import useContext
-import { auth, db } from '../firebase/config';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { app } from '../firebase/config'; // Core app is safe to import
 
 export const AuthContext = createContext();
 
-export const authReducer = (state, action) => {
-  switch (action.type) {
-    case 'LOGIN':
-      return { ...state, user: action.payload };
-    case 'LOGOUT':
-      return { ...state, user: null };
-    case 'AUTH_IS_READY':
-      return { ...state, user: action.payload, authIsReady: true };
-    default:
-      return state;
-  }
-};
+export const useAuth = () => useContext(AuthContext);
 
 export const AuthContextProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(authReducer, { 
-    user: null,
-    authIsReady: false
-  });
+  const [user, setUser] = useState(null);
+  const [services, setServices] = useState({ auth: null, db: null });
+  const [loading, setLoading] = useState(true);
+  const [authFunctions, setAuthFunctions] = useState({});
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const docRef = doc(db, 'users', user.uid);
-        const docSnap = await getDoc(docRef);
+    const loadFirebase = async () => {
+      console.log("[AuthContext] Starting to load Firebase services...");
+      try {
+        const { getAuth, onAuthStateChanged, ...authFuncs } = await import('firebase/auth');
+        const { getFirestore } = await import('firebase/firestore');
+        
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        console.log("[AuthContext] Firebase services loaded successfully.", { auth, db });
+        setServices({ auth, db });
+        setAuthFunctions(authFuncs);
 
-        if (docSnap.exists()) {
-          const userProfile = { ...user, ...docSnap.data() };
-          dispatch({ type: 'AUTH_IS_READY', payload: userProfile });
-        } else {
-          console.error("Critical Error: User profile not found in Firestore for UID:", user.uid);
-          dispatch({ type: 'AUTH_IS_READY', payload: user });
-        }
-      } else {
-        dispatch({ type: 'AUTH_IS_READY', payload: null });
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+          setUser(currentUser);
+          setLoading(false);
+          console.log("[AuthContext] Auth state changed. Loading finished.", { currentUser });
+        });
+
+        return () => unsubscribe();
+      } catch (error) {
+        console.error("[AuthContext] Firebase initialization error:", error);
+        setLoading(false);
       }
-    });
+    };
 
-    return () => unsub();
+    loadFirebase();
   }, []);
 
-  console.log('AuthContext state:', state);
+  const signup = useCallback(async (email, password) => {
+    if (!services.auth || !authFunctions.createUserWithEmailAndPassword) throw new Error("Auth service is not ready.");
+    return authFunctions.createUserWithEmailAndPassword(services.auth, email, password);
+  }, [services.auth, authFunctions]);
 
-  return (
-    <AuthContext.Provider value={{ ...state, dispatch }}>
-      { children }
-    </AuthContext.Provider>
-  );
+  const login = useCallback(async (email, password) => {
+    if (!services.auth || !authFunctions.signInWithEmailAndPassword) throw new Error("Auth service is not ready.");
+    return authFunctions.signInWithEmailAndPassword(services.auth, email, password);
+  }, [services.auth, authFunctions]);
+
+  const logout = useCallback(async () => {
+    if (!services.auth || !authFunctions.signOut) throw new Error("Auth service is not ready.");
+    return authFunctions.signOut(services.auth);
+  }, [services.auth, authFunctions]);
+
+  const value = { user, db: services.db, loading, signup, login, logout };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-
-// ADD THIS EXPORTED HOOK
-// This custom hook makes it easy to use the auth context in other components
-export const useAuthContext = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw Error('useAuthContext must be used inside an AuthContextProvider');
-  }
-  return context;
-};
-

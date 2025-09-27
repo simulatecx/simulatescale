@@ -1,56 +1,71 @@
-// src/components/CompanyList.js
-
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../firebase/config'; // Import our database connection
-import './CompanyList.css';
+import { useAuth } from '../context/AuthContext';
 
-const CompanyList = () => {
-  // 'useState' is a React Hook to hold data that might change.
-  // We'll store our array of companies here. It starts as an empty array.
+export default function CompanyList() {
   const [companies, setCompanies] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { db } = useAuth();
 
-  // 'useEffect' is a Hook that runs code after the component renders.
-  // The empty array [] at the end means it will only run ONCE, when the component first loads.
   useEffect(() => {
-    // This is an async function to fetch data from Firestore.
-    const fetchCompanies = async () => {
-      try {
-        // 1. Create a reference to our 'companies' collection
-        const companiesCollection = collection(db, 'companies');
-        // 2. Get all the documents from that collection
-        const companySnapshot = await getDocs(companiesCollection);
-        // 3. Map over the documents and create a clean array of our data
-        const companyData = companySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        // 4. Update our component's state with the fetched data
-        setCompanies(companyData);
-      } catch (error) {
-        console.error("Error fetching companies: ", error);
-      }
-    };
+    console.log("[CompanyList] Component mounted or db state changed. DB object:", db);
 
-    fetchCompanies(); // Call the function
-  }, []); // The empty dependency array ensures this runs only once
+    if (db) {
+      const fetchCompanies = async () => {
+        console.log("[CompanyList] DB is available. Starting fetch...");
+        setIsLoading(true);
+        try {
+          const companiesCollection = collection(db, 'companies');
+          console.log("[CompanyList] Fetching documents from 'companies' collection...");
+          const companySnapshot = await getDocs(companiesCollection);
+          
+          if (companySnapshot.empty) {
+            console.warn("[CompanyList] Firestore query returned no documents.");
+          } else {
+            console.log(`[CompanyList] Firestore query returned ${companySnapshot.size} documents.`);
+          }
+
+          const companyData = companySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          
+          console.log("[CompanyList] Fetched and mapped data:", companyData);
+          setCompanies(companyData);
+
+        } catch (error) {
+          console.error("[CompanyList] Error during Firestore fetch:", error);
+        } finally {
+          setIsLoading(false);
+          console.log("[CompanyList] Fetch finished. Loading set to false.");
+        }
+      };
+      fetchCompanies();
+    } else {
+      console.log("[CompanyList] DB not yet available. Waiting...");
+    }
+  }, [db]);
+
+  if (isLoading) {
+    return <div className="loading-text">Loading Companies...</div>;
+  }
+
+  if (companies.length === 0) {
+    return <div className="no-companies-text">No companies found in the database.</div>;
+  }
 
   return (
-    <div className="company-list-container">
-      <h2>Top Companies</h2>
-      <div className="company-grid">
-        {/* We map over the 'companies' array. For each company object, we render a card. */}
-        {companies.map(company => (
-          <div key={company.id} className="company-card">
-            <img src={company.logoUrl} alt={`${company.name} logo`} className="company-logo" />
+    <div className="company-grid">
+      {companies.map(company => (
+        <Link href={`/companies/${company.id}`} key={company.id}>
+          <a className="company-list-card">
+            {company.logoUrl && <img src={company.logoUrl} alt={`${company.name} logo`} />}
             <h3>{company.name}</h3>
             <p>{company.description}</p>
-            <a href={`/company/${company.id}`} className="view-details-button">View Details</a>
-          </div>
-        ))}
-      </div>
+          </a>
+        </Link>
+      ))}
     </div>
   );
-};
-
-export default CompanyList;
+}

@@ -1,30 +1,22 @@
-// src/components/Footer.js
-
 import React from 'react';
-import { Link } from 'react-router-dom';
-import './Footer.css';
+import Link from 'next/link'; // <--- The corrected import
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
     <footer className="footer">
-      <div className="footer-container">
-        <div className="footer-about">
-          <h4>PriceTransparent</h4>
-          <p>Empowering buyers with real-world data to negotiate fairer deals on enterprise software.</p>
-        </div>
-        <div className="footer-links">
-          <h4>Quick Links</h4>
-          <ul>
-            <li><Link to="/">Home</Link></li>
-            <li><Link to="/companies">Companies</Link></li>
-            {/* We can add links to 'About Us', 'Contact', etc. here later */}
-          </ul>
-        </div>
-      </div>
-      <div className="footer-bottom">
-        <p>&copy; {currentYear} PriceTransparent. All Rights Reserved.</p>
+      <div className="footer-content">
+        <p>&copy; {currentYear} Project Scale. All rights reserved.</p>
+        <nav className="footer-links">
+          {/* Use the Next.js Link component */}
+          <Link href="/privacy-policy">
+            <a>Privacy Policy</a>
+          </Link>
+          <Link href="/terms-of-service">
+            <a>Terms of Service</a>
+          </Link>
+        </nav>
       </div>
     </footer>
   );
