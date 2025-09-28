@@ -1,46 +1,61 @@
-import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
+import React from 'react';
 import { useAuth } from '../context/AuthContext';
+import Link from 'next/link';
 
-export default function DiscountTable({ companyId }) {
-  const [discounts, setDiscounts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const { db } = useAuth(); // Get db from context
+// The component now receives discounts as a prop
+export default function DiscountTable({ discounts }) {
+  const { user, loading } = useAuth();
 
-  useEffect(() => {
-    if (!db) return; // Wait for db to be available
+  // Helper function to calculate and format the discount
+  const getDiscountDisplay = (deal) => {
+    if (deal.discountMethod === 'percentage') {
+      return deal.discountPercentage;
+    }
+    if (deal.discountMethod === 'values' && deal.listPrice > 0 && deal.finalPrice > 0) {
+      const percentage = ((deal.listPrice - deal.finalPrice) / deal.listPrice) * 100;
+      return `${percentage.toFixed(0)}%`;
+    }
+    return 'N/A';
+  };
 
-    const q = query(collection(db, 'companies', companyId, 'discounts'), orderBy('createdAt', 'desc'));
-    
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      setDiscounts(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching discounts:", error);
-      setLoading(false);
-    });
+  if (loading) {
+    return <p>Loading discounts...</p>;
+  }
 
-    return () => unsubscribe();
-  }, [companyId, db]); // Rerun when db is available
+  // If the user is a guest (not logged in), show a call to action.
+  if (!user) {
+    return (
+      <div className="auth-prompt-card">
+        <h3>See Discount Data</h3>
+        <p>Log in or create an account to view and contribute anonymous discount data.</p>
+        <Link href="/auth">
+          <a className="auth-button">Login / Sign Up</a>
+        </Link>
+      </div>
+    );
+  }
 
-  if (loading) return <p>Loading discount data...</p>;
-  if (discounts.length === 0) return <p>No discount data has been shared yet. Be the first!</p>;
+  if (discounts.length === 0) {
+    return <p>No SMB discount data has been shared yet. Be the first!</p>;
+  }
 
   return (
     <table className="discount-table">
       <thead>
         <tr>
           <th>Discount (%)</th>
-          <th>Term</th>
-          <th>Date of Deal</th>
+          <th>Contract Term</th>
+          <th>Licenses</th>
+          <th>Company Size</th>
         </tr>
       </thead>
       <tbody>
-        {discounts.map(discount => (
-          <tr key={discount.id}>
-            <td>{discount.amount}%</td>
-            <td>{discount.term}</td>
-            <td>{discount.date}</td>
+        {discounts.map(deal => (
+          <tr key={deal.id}>
+            <td><strong>{getDiscountDisplay(deal)}</strong></td>
+            <td>{deal.contractTerm}</td>
+            <td>{deal.licenses}</td>
+            <td>{deal.companySize}</td>
           </tr>
         ))}
       </tbody>

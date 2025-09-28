@@ -11,6 +11,8 @@ import '../src/components/Footer.css';
 import '../src/pages/AuthPage.css';
 import '../src/pages/CompaniesPage.css';
 import '../src/pages/CompanyPage.css';
+import '../src/components/FeaturedCompanies.css'; 
+import '../src/components/TopDiscounts.css'; 
 
 import { AuthContextProvider } from '../src/context/AuthContext';
 

@@ -6,7 +6,7 @@ import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firesto
 // components
 import DiscountTable from '../components/DiscountTable';
 import DiscountForm from '../components/DiscountForm';
-import DataSummary from '../components/DataSummary';
+import DataSummary from '../components/FeaturedCompanies';
 
 // context
 import { useAuthContext } from '../context/AuthContext';

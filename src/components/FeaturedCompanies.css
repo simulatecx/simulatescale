@@ -1,0 +1,66 @@
+.featured-companies-section {
+  max-width: 1200px;
+  margin: 60px auto;
+  padding: 0 20px;
+}
+
+.featured-companies-section h2 {
+  font-size: 1.8rem;
+  color: #333;
+  margin-bottom: 30px;
+}
+
+.carousel-container {
+  display: flex;
+  overflow-x: auto;
+  padding-bottom: 20px; /* For the scrollbar */
+  gap: 20px;
+  scrollbar-width: thin;
+  scrollbar-color: #007bff #f3f5f8;
+}
+
+/* For Webkit browsers like Chrome, Safari */
+.carousel-container::-webkit-scrollbar {
+  height: 8px;
+}
+.carousel-container::-webkit-scrollbar-track {
+  background: #f3f5f8;
+  border-radius: 4px;
+}
+.carousel-container::-webkit-scrollbar-thumb {
+  background-color: #007bff;
+  border-radius: 4px;
+}
+
+.company-carousel-card {
+  flex: 0 0 150px; /* Flex-basis of 150px, don't grow or shrink */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fff;
+  text-align: center;
+  text-decoration: none;
+  color: #333;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.company-carousel-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.company-carousel-card img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  margin-bottom: 15px;
+}
+
+.company-carousel-card h3 {
+  font-size: 1rem;
+  margin: 0;
+}

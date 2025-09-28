@@ -15,10 +15,9 @@ export default function AuthPage() {
   
   const { user, signup, login, loading } = useAuth();
 
-  // Use an effect to redirect, which is safer during rendering
   useEffect(() => {
     if (!loading && user) {
-      router.push('/companies');
+      router.push('/'); // Redirect to homepage if already logged in
     }
   }, [user, loading, router]);
 
@@ -32,16 +31,15 @@ export default function AuthPage() {
       } else {
         await signup(email, password);
       }
-      // No need to push here, the useEffect will handle it
+      router.push('/'); // Redirect to homepage on successful login/signup
     } catch (err) {
       setError(err.message);
       setIsPending(false);
     }
   };
 
-  // Don't render the form if we are still loading or the user is found
   if (loading || user) {
-    return <div>Loading...</div>;
+    return <div>Loading...</div>; // Or a spinner component
   }
 
   return (
