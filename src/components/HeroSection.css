@@ -1,48 +1,56 @@
-/* src/components/HeroSection.css */
-
-.hero-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+.hero-section.g2-style {
+  background-color: #f3f5f8;
+  padding: 80px 20px;
   text-align: center;
-  padding: 4rem 2rem;
-  background-color: #f8f9fa;
 }
 
-.hero-container h1 {
-  font-size: 3rem;
+.hero-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.hero-content h1 {
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #13386b;
   margin-bottom: 1rem;
-  max-width: 600px;
 }
 
-.hero-container p {
-  font-size: 1.2rem;
-  margin-bottom: 2rem;
-  max-width: 500px;
-  color: #6c757d;
+.hero-content p {
+  font-size: 1.25rem;
+  color: #5a739c;
+  margin-bottom: 2.5rem;
 }
 
-.hero-search-bar {
+.hero-search-form {
   display: flex;
-  width: 100%;
-  max-width: 500px;
+  max-width: 600px;
+  margin: 0 auto;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
 }
 
-.hero-search-bar input {
+.hero-search-form input {
   flex-grow: 1;
-  padding: 0.8rem;
-  font-size: 1rem;
-  border: 1px solid #ced4da;
-  border-radius: 5px 0 0 5px;
+  border: 1px solid #dfe3e9;
+  padding: 18px 25px;
+  font-size: 1.1rem;
+  border-radius: 8px 0 0 8px;
+  outline: none;
 }
 
-.hero-search-bar button {
-  padding: 0.8rem 1.5rem;
-  font-size: 1rem;
+.hero-search-form button {
+  padding: 0 30px;
   border: none;
   background-color: #007bff;
   color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
   cursor: pointer;
-  border-radius: 0 5px 5px 0;
+  border-radius: 0 8px 8px 0;
+  transition: background-color 0.2s ease;
+}
+
+.hero-search-form button:hover {
+  background-color: #0056b3;
 }

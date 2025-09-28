@@ -9,41 +9,23 @@ export default function CompanyList() {
   const { db } = useAuth();
 
   useEffect(() => {
-    console.log("[CompanyList] Component mounted or db state changed. DB object:", db);
-
     if (db) {
       const fetchCompanies = async () => {
-        console.log("[CompanyList] DB is available. Starting fetch...");
         setIsLoading(true);
         try {
           const companiesCollection = collection(db, 'companies');
-          console.log("[CompanyList] Fetching documents from 'companies' collection...");
           const companySnapshot = await getDocs(companiesCollection);
-          
-          if (companySnapshot.empty) {
-            console.warn("[CompanyList] Firestore query returned no documents.");
-          } else {
-            console.log(`[CompanyList] Firestore query returned ${companySnapshot.size} documents.`);
-          }
-
           const companyData = companySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
+            id: doc.id, ...doc.data()
           }));
-          
-          console.log("[CompanyList] Fetched and mapped data:", companyData);
           setCompanies(companyData);
-
         } catch (error) {
-          console.error("[CompanyList] Error during Firestore fetch:", error);
+          console.error("Error fetching companies: ", error);
         } finally {
           setIsLoading(false);
-          console.log("[CompanyList] Fetch finished. Loading set to false.");
         }
       };
       fetchCompanies();
-    } else {
-      console.log("[CompanyList] DB not yet available. Waiting...");
     }
   }, [db]);
 
@@ -59,10 +41,11 @@ export default function CompanyList() {
     <div className="company-grid">
       {companies.map(company => (
         <Link href={`/companies/${company.id}`} key={company.id}>
-          <a className="company-list-card">
-            {company.logoUrl && <img src={company.logoUrl} alt={`${company.name} logo`} />}
+          <a className="company-card">
+            {company.logoUrl && <img src={company.logoUrl} alt={`${company.name} logo`} className="company-logo" />}
             <h3>{company.name}</h3>
             <p>{company.description}</p>
+            <span className="view-details-button">View Details</span>
           </a>
         </Link>
       ))}
