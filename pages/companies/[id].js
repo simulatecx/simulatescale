@@ -4,10 +4,8 @@ import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { useAuth } from '../../src/context/AuthContext';
 import adminDb from '../../src/firebase/admin-config';
-import Navbar from '../../src/components/Navbar';
 import DiscountTable from '../../src/components/DiscountTable';
 import DiscountForm from '../../src/components/DiscountForm';
-import Footer from '../../src/components/Footer';
 
 // This function runs on the server and fetches the company's core data.
 export async function getServerSideProps(context) {
@@ -79,7 +77,6 @@ export default function CompanyPage({ company }) {
         <title>{company.name} Discounts & Intel | Project Scale</title>
         <meta name="description" content={`Crowdsourced discount data and negotiation insights for ${company.name}.`} />
       </Head>
-      <Navbar />
       <main className="company-page-container">
         <header className="company-header">
           {company.logoUrl && <img src={company.logoUrl} alt={`${company.name} logo`} className="company-logo-large" />}
@@ -144,7 +141,6 @@ export default function CompanyPage({ company }) {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

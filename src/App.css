@@ -36,3 +36,195 @@
     transform: rotate(360deg);
   }
 }
+
+.hero-search-form {
+    position: relative; /* This is crucial for positioning the suggestions dropdown */
+}
+
+.suggestions-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0;
+    position: absolute;
+    top: 100%; /* Position it right below the search input */
+    left: 0;
+    width: 100%;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    text-align: left;
+}
+
+.suggestions-list li {
+    padding: 12px 20px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    color: #333; /* Ensure text is readable */
+}
+
+.suggestions-list li:last-child {
+    border-bottom: none;
+}
+
+.suggestions-list li:hover {
+    background-color: #f7f7f7;
+}
+
+/* --- Top Discounts Carousel Section --- */
+
+.top-discounts {
+  padding: 60px 20px; /* Added horizontal padding */
+  text-align: center;
+  background-color: #f9f9f9;
+}
+
+.top-discounts h2 {
+  font-size: 2.5rem;
+  margin-bottom: 40px;
+}
+
+/* New: Flex container for the two-column layout */
+.top-discounts-layout {
+  display: flex;
+  align-items: stretch; /* Make columns equal height */
+  max-width: 1200px; /* Widen the container a bit */
+  margin: 0 auto;
+}
+
+/* New: Wrapper for the static card on the left */
+.static-tier-card-wrapper {
+  flex: 0 0 250px; /* Give it a fixed width of 250px */
+  padding-right: 30px;
+}
+
+/* New: Styling for the static tier card */
+.static-tier-card {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: left;
+  height: 100%; /* Make it fill the wrapper height */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.static-tier-card h3 {
+  font-size: 1.5rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+
+.static-tier-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.static-tier-card li {
+  font-size: 1.1rem;
+  padding: 8px 0;
+  color: #333;
+}
+
+/* --- Top Discounts Carousel Section --- */
+
+.top-discounts {
+  padding: 60px 20px;
+  text-align: center;
+  background-color: #f9f9f9;
+}
+
+.top-discounts h2 {
+  font-size: 2.5rem;
+  margin-bottom: 40px;
+}
+
+.discount-carousel-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.discount-card-wrapper {
+  padding: 0 15px;
+}
+
+.discount-card {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  min-height: 340px; /* Adjusted height for the new layout */
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.discount-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.discount-card h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+  height: 50px;
+  width: 100%; /* Ensure h3 takes full width of the card */
+  
+  /* --- ADD THESE LINES --- */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.company-logo {
+  height: 60px;
+  width: auto;
+  max-width: 150px;
+  object-fit: contain;
+  margin-bottom: 20px;
+}
+
+/* New: Tier Grid styles using CSS Grid */
+.tier-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Two equal columns */
+  gap: 10px; /* Space between grid items */
+  width: 100%;
+  margin-top: auto; /* Push the grid to the bottom of the card */
+}
+
+.tier-item {
+  background-color: #f7f9fc;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+}
+
+/* Make the Enterprise item span both columns */
+.tier-item.enterprise {
+  grid-column: 1 / -1; /* Span from the first to the last column line */
+}
+
+.tier-item span {
+  display: block;
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-bottom: 4px;
+}
+
+.tier-item strong {
+  display: block;
+  font-size: 1.2rem;
+  color: #007bff;
+  font-weight: 600;
+}
+
+/* --- End Top Discounts Carousel Section --- */

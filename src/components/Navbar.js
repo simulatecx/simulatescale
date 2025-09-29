@@ -1,50 +1,50 @@
+// src/components/Navbar.js
+
 import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
-import { useRouter } from 'next/router';
+import { useUI } from '../context/UIContext';
 
 export default function Navbar() {
-  const { user, loading, logout } = useAuth();
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      router.push('/auth'); // Redirect to login page after logout
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  };
+  const { user, logout } = useAuth(); // Assuming logout is provided by your context
+  const { openDiscountModal } = useUI();
 
   return (
     <nav className="navbar">
-      <div className="navbar-logo">
+      <div className="navbar-container">
         <Link href="/">
-          <a>Project Scale</a>
+          <a className="navbar-logo">SimulateScale</a>
         </Link>
-      </div>
-      <ul className="navbar-links">
-        <li>
-          <Link href="/companies">
-            <a>All Companies</a>
-          </Link>
-        </li>
-        {/* Only render login/logout buttons once loading is complete */}
-        {!loading && (
-          <>
-            {user ? (
-              <li>
-                <button onClick={handleLogout} className="logout-button">Log Out</button>
+        <ul className="nav-menu">
+          {/* We can add other links like 'Companies' back here later */}
+          
+          {user ? (
+            <>
+              <li className="nav-item">
+                <button onClick={openDiscountModal} className="nav-links-button cta-button">
+                  Submit a Discount
+                </button>
               </li>
-            ) : (
-              <li>
+              <li className="nav-item">
+                <button onClick={logout} className="nav-links-button">Logout</button>
+              </li>
+              {/* A profile icon could be added here in the future */}
+            </>
+          ) : (
+            <>
+              <li className="nav-item">
+                <button onClick={openDiscountModal} className="nav-links-button cta-button">
+                  Submit a Discount
+                </button>
+              </li>
+              <li className="nav-item">
                 <Link href="/auth">
-                  <a>Login / Sign Up</a>
+                  <a className="nav-links">Login / Sign Up</a>
                 </Link>
               </li>
-            )}
-          </>
-        )}
-      </ul>
+            </>
+          )}
+        </ul>
+      </div>
     </nav>
   );
 }
