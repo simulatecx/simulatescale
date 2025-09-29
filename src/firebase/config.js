@@ -1,5 +1,8 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
+import { getFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
+// Your original, working credentials
 const firebaseConfig = {
   apiKey: "AIzaSyANdQS-ZonUyHfYKJanl7NowF1j2ZuktRc",
   authDomain: "simulatescale.firebaseapp.com",
@@ -10,7 +13,13 @@ const firebaseConfig = {
   measurementId: "G-QS03V0X324"
 };
 
-// Initialize Firebase App (safe on server and client)
+// This line is identical to your original file
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-export { app };
+// ---- NEW AND NECESSARY PART ----
+// We initialize the database and auth services here
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// We export db and auth so other components can import them
+export { app, db, auth };

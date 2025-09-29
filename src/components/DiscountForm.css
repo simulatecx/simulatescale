@@ -1,105 +1,247 @@
 /* src/components/DiscountForm.css */
 
-.form-container {
-  max-width: 700px;
-  margin: 3rem auto;
-  padding: 2rem;
-  background-color: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+.discount-form-container {
+  max-width: 800px;
+  /* Remove margin and shadow, as the modal handles this now */
+  margin: 0 auto; /* Keep it centered inside the modal */
+  padding: 10px; /* Adjust padding as needed */
+  background: #fff;
+  border-radius: 12px;
+  /* box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1); */ /* REMOVE THIS LINE */
 }
 
-.form-container h2 {
-  text-align: center;
-  margin-bottom: 2rem;
+.form-tabs {
+  display: flex;
+  margin-bottom: 30px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.form-tabs button {
+  flex: 1;
+  padding: 15px 10px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #6c757d;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.form-tabs button:hover {
+  color: #007bff;
+}
+
+.form-tabs button.active {
+  color: #007bff;
+  border-bottom-color: #007bff;
+}
+
+.discount-form .form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.discount-form input,
+.discount-form select,
+.discount-form textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.discount-form input:focus,
+.discount-form select:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.radio-group {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.radio-group strong {
+  margin-right: 10px;
+}
+
+.form-subsection {
+  padding-bottom: 25px;
+  border-bottom: 1px solid #f0f0f0;
+  text-align: left;
+}
+
+.form-subsection:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.form-subsection-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 20px;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 0.5rem;
   font-weight: 500;
-  color: #333;
+  margin-bottom: 8px;
 }
 
-.form-group input,
-.form-group select {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ced4da;
-  border-radius: 5px;
-  font-size: 1rem;
-  box-sizing: border-box; /* Ensures padding doesn't affect width */
+.form-group label span {
+  font-weight: 700;
+  color: #007bff;
 }
 
-.form-row {
+/* --- TOGGLE SWITCH STYLES --- */
+.form-group-toggle {
   display: flex;
-  gap: 1.5rem;
+  align-items: center;
+  gap: 15px;
+  margin-top: 10px;
 }
 
-.form-row .form-group {
-  flex: 1;
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
 }
 
-.submit-button {
-  width: 100%;
-  padding: 0.8rem;
-  font-size: 1.1rem;
-  font-weight: bold;
-  color: #fff;
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+}
+
+input:checked + .slider {
   background-color: #28a745;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
 }
 
-.submit-button:hover {
-  background-color: #218838;
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
 }
 
-.submit-button:disabled {
-  background-color: #6c757d;
-  cursor: not-allowed;
+input:checked + .slider:before {
+  transform: translateX(26px);
 }
 
-.submission-message {
-  text-align: center;
-  font-size: 1.2rem;
-  color: #28a745;
-  padding: 2rem 0;
+.slider.round {
+  border-radius: 34px;
 }
 
-.button-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+.slider.round:before {
+  border-radius: 50%;
+}
+/* --- END TOGGLE STYLES --- */
+
+.conditional-textfield {
+  margin-top: 15px;
 }
 
-.button-group button {
-  padding: 10px 20px;
+.rating-item {
+  margin-bottom: 25px;
+}
+
+.rating-description {
   font-size: 0.9rem;
+  color: #6c757d;
+  margin: 5px 0 10px 0;
+}
+
+input[type="range"] {
+  padding: 0;
+}
+
+.live-discount-display {
+  padding: 15px;
+  background-color: #e9f5ff;
+  border: 1px solid #b3d7ff;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 1.1rem;
   font-weight: 500;
-  border: 1px solid #ccc;
-  border-radius: 20px; /* Pill shape */
-  background-color: #f8f9fa;
-  color: #333;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
 }
 
-.button-group button:hover {
-  background-color: #e2e6ea;
-  border-color: #b1b9c1;
+.live-discount-display span {
+  font-weight: 700;
+  color: #007bff;
 }
 
-.button-group button.active {
+/* --- UPDATED BUTTON CONTAINER --- */
+.form-actions {
+  margin-top: 30px;
+  display: flex;
+  justify-content: flex-end; /* Aligns buttons to the right */
+  gap: 15px;
+}
+
+.submit-btn {
+  width: auto;
+  padding: 12px 25px;
   background-color: #007bff;
-  color: #fff;
-  border-color: #007bff;
-  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.submit-btn.secondary {
+  background-color: #6c757d;
+}
+
+.submit-btn:hover {
+  background-color: #0056b3;
+}
+
+.submit-btn.secondary:hover {
+  background-color: #5a6268;
+}
+
+.form-error {
+  color: #dc3545;
+  margin-top: 15px;
+  text-align: right;
+}
+
+.form-success {
+  color: #28a745;
+  margin-top: 15px;
+  text-align: center;
 }
