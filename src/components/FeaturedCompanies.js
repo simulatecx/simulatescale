@@ -1,41 +1,62 @@
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { collection, getDocs, limit, query } from 'firebase/firestore';
-import { useAuth } from '../context/AuthContext';
+// src/components/FeaturedCompanies.js
 
-export default function FeaturedCompanies() {
+import { useState, useEffect } from 'react';
+import { collection, getDocs, limit, query } from 'firebase/firestore';
+import { db } from '../firebase/config';
+import Link from 'next/link';
+
+const FeaturedCompanies = () => {
   const [companies, setCompanies] = useState([]);
-  const { db } = useAuth();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (db) {
-      const fetchCompanies = async () => {
-        try {
-          const companiesRef = collection(db, 'companies');
-          // Fetch the first 10 companies for the carousel
-          const q = query(companiesRef, limit(10));
-          const companySnapshot = await getDocs(q);
-          setCompanies(companySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        } catch (error) {
-          console.error("Error fetching featured companies:", error);
-        }
-      };
-      fetchCompanies();
-    }
-  }, [db]);
+    const fetchCompanies = async () => {
+      try {
+        setLoading(true);
+        const companiesRef = collection(db, 'companies');
+        // Let's fetch the first 4 companies as "featured"
+        const q = query(companiesRef, limit(4));
+        const querySnapshot = await getDocs(q);
+        const featuredCompanies = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setCompanies(featuredCompanies);
+      } catch (error) {
+        console.error("Error fetching featured companies:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCompanies();
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="featured-companies">
+        <h2>Featured Companies</h2>
+        <p>Loading...</p>
+      </section>
+    );
+  }
 
   if (companies.length === 0) {
-    return null; // Don't render anything if there are no companies to show
+    return (
+       <section className="featured-companies">
+        <h2>Featured Companies</h2>
+        <p>No companies have been added to the database yet.</p>
+      </section>
+    );
   }
 
   return (
-    <section className="featured-companies-section">
-      <h2>Companies with Recent Data</h2>
-      <div className="carousel-container">
+    <section className="featured-companies">
+      <h2>Featured Companies</h2>
+      <div className="company-grid">
         {companies.map(company => (
-          <Link href={`/companies/${company.id}`} key={company.id}>
-            <a className="company-carousel-card">
-              {company.logoUrl && <img src={company.logoUrl} alt={`${company.name} logo`} />}
+          <Link key={company.id} href={`/companies/${company.id}`}>
+            <a className="company-card">
+              <img src={company.logoUrl} alt={`${company.name} logo`} />
               <h3>{company.name}</h3>
             </a>
           </Link>
@@ -43,4 +64,6 @@ export default function FeaturedCompanies() {
       </div>
     </section>
   );
-}
+};
+
+export default FeaturedCompanies;
