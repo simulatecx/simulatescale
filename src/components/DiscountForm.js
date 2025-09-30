@@ -3,7 +3,15 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase/config';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { useAuth } from '../context/AuthContext';
 
+// Helper function to generate color for score ratings
+const getScoreColor = (score) => {
+  const hue = ((score - 1) / 9) * 120; // 0 (red) to 120 (green)
+  return `hsl(${hue}, 90%, 45%)`;
+};
+
+// Reusable Toggle Switch component
 const ToggleSwitch = ({ label, name, checked, onChange }) => (
   <div className="form-group-toggle">
     <label className="toggle-switch">
@@ -14,22 +22,22 @@ const ToggleSwitch = ({ label, name, checked, onChange }) => (
   </div>
 );
 
+// This object contains all fields for the entire form
 const initialFormData = {
+  // Tab 1 Fields
   saasProduct: '', companySize: '', industry: '', listPrice: '',
   finalPrice: '', licensesPurchased: '', contractTerm: '1 year',
   paymentTerms: 'Annual upfront', primaryUseCase: '',
+  oneTimeCredits: false, oneTimeCreditsAmount: 5000,
+  // Tab 2 Fields
   concessions: {
     netTerms: 'Net 30',
     deferredPayments: { software: false, implementation: false },
-    extendedRamp: 30,
-    trainingCredits: false,
-    extendedLimitsOption: '',
-    customSLAs: false,
-    dedicatedSupport: false,
-    futureDiscountLock: false,
-    legalTermConcessions: false,
-    legalConcessionsDetails: '',
+    extendedRamp: 0, trainingCredits: false, futureDiscountLock: false,
+    futureDiscountLockInValue: 0, renewalPriceIncreaseLock: 0,
+    legalTermConcessions: false, legalConcessionsDetails: '',
   },
+  // Tab 3 Fields
   ratings: {
     salesProcessRating: 5, understandingOfNeedsRating: 5,
     negotiationTransparencyRating: 5, implementationRating: 5,
@@ -45,6 +53,10 @@ const DiscountForm = ({ onSubmission }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [liveDiscount, setLiveDiscount] = useState(0);
+  const { user } = useAuth(); // Get the current user
+
+  // SECTION: Data Fetching and Calculations
+  // =======================================
 
   useEffect(() => {
     const fetchCompanies = async () => {
@@ -57,7 +69,7 @@ const DiscountForm = ({ onSubmission }) => {
   }, []);
 
   useEffect(() => {
-     const { listPrice, finalPrice } = formData;
+    const { listPrice, finalPrice } = formData;
     if (listPrice > 0 && finalPrice > 0 && parseFloat(listPrice) >= parseFloat(finalPrice)) {
       const discount = ((listPrice - finalPrice) / listPrice) * 100;
       setLiveDiscount(Math.ceil(discount));
@@ -66,15 +78,21 @@ const DiscountForm = ({ onSubmission }) => {
     }
   }, [formData.listPrice, formData.finalPrice]);
 
+  // SECTION: Event Handlers
+  // =========================
+
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    if (name === 'oneTimeCredits') {
+      setFormData(prev => ({ ...prev, [name]: checked }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleConcessionChange = (e) => {
     const { name, value, type, checked } = e.target;
     const [field, subfield] = name.split('.');
-
     setFormData(prev => {
       const newConcessions = { ...prev.concessions };
       if (subfield) {
@@ -96,41 +114,30 @@ const DiscountForm = ({ onSubmission }) => {
 
   const handleSubmit = async (e, submittedFromTab) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
-
-    if (submittedFromTab !== 'experience') {
-      const proceed = window.confirm("Are you sure you don't want to fill out additional details about your engagement? More details unlock more company pages to view.");
-      if (!proceed) {
+       
+    if (!user) {
+        setError("You must be logged in to submit a discount.");
         return;
-      }
     }
 
+    setError('');
+    setSuccess('');
+    if (submittedFromTab !== 'experience') {
+      const proceed = window.confirm("Are you sure you don't want to fill out additional details? More details unlock more company pages.");
+      if (!proceed) return;
+    }
     const { listPrice, finalPrice, saasProduct, ratings } = formData;
-    
     if (!saasProduct || !listPrice || !finalPrice) {
       setError("Please fill out all required fields in the Financial tab.");
       setActiveTab('financial');
       return;
     }
-
     const ratingValues = Object.values(ratings);
     const vendorScore = ratingValues.reduce((acc, val) => acc + val, 0) / ratingValues.length;
-    
     let submissionCompleteness = 'minimal';
     if (submittedFromTab === 'concessions') submissionCompleteness = 'standard';
     if (submittedFromTab === 'experience') submissionCompleteness = 'full';
-
-    const submissionData = {
-      ...formData,
-      companyName: saasProduct,
-      tier: 'SMB', 
-      discountPercentage: liveDiscount,
-      vendorScore: parseFloat(vendorScore.toFixed(1)),
-      submissionCompleteness,
-      createdAt: new Date(),
-    };
-
+    const submissionData = { ...formData, userId: user.uid, status: 'pending', companyName: saasProduct, tier: 'SMB', discountPercentage: liveDiscount, vendorScore: parseFloat(vendorScore.toFixed(1)), submissionCompleteness, createdAt: new Date() };
     try {
       await addDoc(collection(db, 'discounts'), submissionData);
       setSuccess('Your discount has been submitted successfully! Thank you.');
@@ -143,6 +150,9 @@ const DiscountForm = ({ onSubmission }) => {
     }
   };
 
+  // SECTION: JSX Rendering
+  // ========================
+
   return (
     <div className="discount-form-container">
       <div className="form-tabs">
@@ -150,8 +160,9 @@ const DiscountForm = ({ onSubmission }) => {
         <button onClick={() => setActiveTab('concessions')} className={activeTab === 'concessions' ? 'active' : ''}>2. Additional Concessions (Optional)</button>
         <button onClick={() => setActiveTab('experience')} className={activeTab === 'experience' ? 'active' : ''}>3. Vendor Experience</button>
       </div>
-
       <form onSubmit={(e) => handleSubmit(e, activeTab)} className="discount-form">
+        
+        {/* --- TAB 1: FINANCIAL INCENTIVES --- */}
         {activeTab === 'financial' && (
           <div className="form-section">
             <select name="saasProduct" value={formData.saasProduct} onChange={handleInputChange} required>
@@ -197,28 +208,27 @@ const DiscountForm = ({ onSubmission }) => {
               <label><input type="radio" name="paymentTerms" value="Multi-year prepay" checked={formData.paymentTerms === 'Multi-year prepay'} onChange={handleInputChange} /> Multi-Year</label>
             </div>
             <input type="text" name="primaryUseCase" placeholder="Primary Use Case" value={formData.primaryUseCase} onChange={handleInputChange} />
-            <div className="live-discount-display">
-              Calculated Discount: <span>{liveDiscount}%</span>
+            <div className="form-group">
+              <ToggleSwitch label="One Time Credits Received?" name="oneTimeCredits" checked={formData.oneTimeCredits} onChange={handleInputChange} />
+              {formData.oneTimeCredits && (
+                <>
+                  <label>Amount: <span>${formData.oneTimeCreditsAmount.toLocaleString()}</span></label>
+                  <input type="range" min="500" max="1000000" step="500" name="oneTimeCreditsAmount" value={formData.oneTimeCreditsAmount} onChange={handleInputChange} />
+                </>
+              )}
             </div>
+            <div className="live-discount-display">Calculated Discount: <span>{liveDiscount}%</span></div>
           </div>
         )}
 
+        {/* --- TAB 2: ADDITIONAL CONCESSIONS --- */}
         {activeTab === 'concessions' && (
           <div className="form-section">
             <div className="form-subsection">
-              <h3 className="form-subsection-title">Payment Term Concessions</h3>
-              <div className="form-group">
-                <label>Net Payment Terms</label>
-                <select name="netTerms" value={formData.concessions.netTerms} onChange={handleConcessionChange}>
-                  <option value="Net 30">Net 30</option>
-                  <option value="Net 60">Net 60</option>
-                  <option value="Net 90">Net 90</option>
-                  <option value="Net 120">Net 120</option>
-                </select>
-              </div>
+              <h3 className="form-subsection-title">Payment & Billing</h3>
               <div className="form-group">
                 <label>Extended Ramp Period: <span>{formData.concessions.extendedRamp} days</span></label>
-                <input type="range" min="30" max="180" step="30" name="extendedRamp" value={formData.concessions.extendedRamp} onChange={handleConcessionChange} />
+                <input type="range" min="0" max="180" step="30" name="extendedRamp" value={formData.concessions.extendedRamp} onChange={handleConcessionChange} />
               </div>
               <div className="form-group">
                 <label>Deferred Payments</label>
@@ -226,18 +236,30 @@ const DiscountForm = ({ onSubmission }) => {
                 <ToggleSwitch label="For Implementation" name="deferredPayments.implementation" checked={formData.concessions.deferredPayments.implementation} onChange={handleConcessionChange} />
               </div>
             </div>
-
+            <div className="form-subsection">
+              <h3 className="form-subsection-title">Renewal Terms</h3>
+              <div className="form-group">
+                <ToggleSwitch label="Future Discount Lock-in?" name="futureDiscountLock" checked={formData.concessions.futureDiscountLock} onChange={handleConcessionChange} />
+                {formData.concessions.futureDiscountLock && (
+                  <>
+                    <label>Discount Locked-in at: <span>{formData.concessions.futureDiscountLockInValue}%</span></label>
+                    <input type="range" min="0" max="100" step="1" name="futureDiscountLockInValue" value={formData.concessions.futureDiscountLockInValue} onChange={handleConcessionChange} />
+                  </>
+                )}
+              </div>
+              <div className="form-group">
+                <label>Renewal Price Increase Cap: <span>{formData.concessions.renewalPriceIncreaseLock}%</span></label>
+                <input type="range" min="0" max="20" step="1" name="renewalPriceIncreaseLock" value={formData.concessions.renewalPriceIncreaseLock} onChange={handleConcessionChange} />
+              </div>
+            </div>
             <div className="form-subsection">
               <h3 className="form-subsection-title">Product, Service & Legal</h3>
               <div className="form-group">
-                 <ToggleSwitch label="Training Credits Included" name="trainingCredits" checked={formData.concessions.trainingCredits} onChange={handleConcessionChange} />
+                <ToggleSwitch label="Training Credits Included" name="trainingCredits" checked={formData.concessions.trainingCredits} onChange={handleConcessionChange} />
               </div>
               <div className="form-group">
-                 <ToggleSwitch label="Future Discount Lock-in" name="futureDiscountLock" checked={formData.concessions.futureDiscountLock} onChange={handleConcessionChange} />
-              </div>
-              <div className="form-group">
-                 <ToggleSwitch label="Legal Term Concessions" name="legalTermConcessions" checked={formData.concessions.legalTermConcessions} onChange={handleConcessionChange} />
-                 {formData.concessions.legalTermConcessions && (
+                <ToggleSwitch label="Legal Term Concessions" name="legalTermConcessions" checked={formData.concessions.legalTermConcessions} onChange={handleConcessionChange} />
+                {formData.concessions.legalTermConcessions && (
                   <input type="text" name="legalConcessionsDetails" placeholder="Briefly describe legal concessions..." value={formData.concessions.legalConcessionsDetails} onChange={handleConcessionChange} className="conditional-textfield" />
                 )}
               </div>
@@ -245,22 +267,23 @@ const DiscountForm = ({ onSubmission }) => {
           </div>
         )}
 
+        {/* --- TAB 3: VENDOR EXPERIENCE --- */}
         {activeTab === 'experience' && (
           <div className="form-section rating-sliders">
             <div className="form-subsection">
               <h3 className="form-subsection-title">Presales</h3>
               <div className="rating-item">
-                <label>Sales Process Quality: <span>{formData.ratings.salesProcessRating}</span></label>
+                <label>Sales Process Quality: <span style={{ color: getScoreColor(formData.ratings.salesProcessRating) }}>{formData.ratings.salesProcessRating}</span></label>
                 <p className="rating-description">How organized, professional, and efficient was the overall sales process?</p>
                 <input type="range" min="1" max="10" name="salesProcessRating" value={formData.ratings.salesProcessRating} onChange={handleRatingChange} />
               </div>
               <div className="rating-item">
-                <label>Understanding of Needs: <span>{formData.ratings.understandingOfNeedsRating}</span></label>
+                <label>Understanding of Needs: <span style={{ color: getScoreColor(formData.ratings.understandingOfNeedsRating) }}>{formData.ratings.understandingOfNeedsRating}</span></label>
                 <p className="rating-description">How well did the sales team understand your specific business challenges and requirements?</p>
                 <input type="range" min="1" max="10" name="understandingOfNeedsRating" value={formData.ratings.understandingOfNeedsRating} onChange={handleRatingChange} />
               </div>
               <div className="rating-item">
-                <label>Negotiation Transparency: <span>{formData.ratings.negotiationTransparencyRating}</span></label>
+                <label>Negotiation Transparency: <span style={{ color: getScoreColor(formData.ratings.negotiationTransparencyRating) }}>{formData.ratings.negotiationTransparencyRating}</span></label>
                 <p className="rating-description">How transparent and fair was the pricing and negotiation process?</p>
                 <input type="range" min="1" max="10" name="negotiationTransparencyRating" value={formData.ratings.negotiationTransparencyRating} onChange={handleRatingChange} />
               </div>
@@ -268,66 +291,52 @@ const DiscountForm = ({ onSubmission }) => {
             <div className="form-subsection">
               <h3 className="form-subsection-title">Implementation & Onboarding</h3>
               <div className="rating-item">
-                <label>Implementation Process: <span>{formData.ratings.implementationRating}</span></label>
+                <label>Implementation Process: <span style={{ color: getScoreColor(formData.ratings.implementationRating) }}>{formData.ratings.implementationRating}</span></label>
                 <p className="rating-description">How smooth and efficient was the implementation and onboarding?</p>
                 <input type="range" min="1" max="10" name="implementationRating" value={formData.ratings.implementationRating} onChange={handleRatingChange} />
               </div>
               <div className="rating-item">
-                <label>Training & Enablement: <span>{formData.ratings.trainingRating}</span></label>
+                <label>Training & Enablement: <span style={{ color: getScoreColor(formData.ratings.trainingRating) }}>{formData.ratings.trainingRating}</span></label>
                 <p className="rating-description">How effective was the training provided to get your team up and running on the platform?</p>
                 <input type="range" min="1" max="10" name="trainingRating" value={formData.ratings.trainingRating} onChange={handleRatingChange} />
               </div>
               <div className="rating-item">
-                <label>Product vs. Promise: <span>{formData.ratings.productPromiseRating}</span></label>
-                <p className="rating-description">How well did the final product meet the expectations set during the sales cycle?</p>
+                <label>Product vs. Promise: <span style={{ color: getScoreColor(formData.ratings.productPromiseRating) }}>{formData.ratings.productPromiseRating}</span></label>
+                <p className="rating-description">How well did the final product meet the expectations and promises set during the sales cycle?</p>
                 <input type="range" min="1" max="10" name="productPromiseRating" value={formData.ratings.productPromiseRating} onChange={handleRatingChange} />
               </div>
             </div>
             <div className="form-subsection">
               <h3 className="form-subsection-title">Post-Sales & Ongoing Relationship</h3>
               <div className="rating-item">
-                <label>Customer Support Quality: <span>{formData.ratings.supportQualityRating}</span></label>
-                <p className="rating-description">How responsive, knowledgeable, and helpful is the customer support team?</p>
+                <label>Customer Support Quality: <span style={{ color: getScoreColor(formData.ratings.supportQualityRating) }}>{formData.ratings.supportQualityRating}</span></label>
+                <p className="rating-description">How responsive, knowledgeable, and helpful is the customer support team when you have issues?</p>
                 <input type="range" min="1" max="10" name="supportQualityRating" value={formData.ratings.supportQualityRating} onChange={handleRatingChange} />
               </div>
               <div className="rating-item">
-                <label>Proactive Success Management: <span>{formData.ratings.successManagementRating}</span></label>
-                <p className="rating-description">How proactive and valuable is the support from your Customer Success or Account Manager?</p>
+                <label>Proactive Success Management: <span style={{ color: getScoreColor(formData.ratings.successManagementRating) }}>{formData.ratings.successManagementRating}</span></label>
+                <p className="rating-description">How proactive and valuable is the ongoing support from your Customer Success or Account Manager?</p>
                 <input type="range" min="1" max="10" name="successManagementRating" value={formData.ratings.successManagementRating} onChange={handleRatingChange} />
               </div>
               <div className="rating-item">
-                <label>Communication: <span>{formData.ratings.communicationRating}</span></label>
-                <p className="rating-description">How effectively does the company communicate product updates and best practices?</p>
+                <label>Communication: <span style={{ color: getScoreColor(formData.ratings.communicationRating) }}>{formData.ratings.communicationRating}</span></label>
+                <p className="rating-description">How effectively does the company communicate product updates, new features, and best practices?</p>
                 <input type="range" min="1" max="10" name="communicationRating" value={formData.ratings.communicationRating} onChange={handleRatingChange} />
               </div>
               <div className="rating-item">
-                <label>Overall Value & Partnership: <span>{formData.ratings.overallValueRating}</span></label>
-                <p className="rating-description">How would you rate the value for money and your likelihood to recommend this vendor?</p>
+                <label>Overall Value & Partnership: <span style={{ color: getScoreColor(formData.ratings.overallValueRating) }}>{formData.ratings.overallValueRating}</span></label>
+                <p className="rating-description">Overall, how would you rate the value for money and your likelihood to recommend this vendor?</p>
                 <input type="range" min="1" max="10" name="overallValueRating" value={formData.ratings.overallValueRating} onChange={handleRatingChange} />
               </div>
             </div>
           </div>
         )}
-        
         {error && <p className="form-error">{error}</p>}
         {success && <p className="form-success">{success}</p>}
-        
         <div className="form-actions">
-          {activeTab === 'financial' && (
-            <>
-              <button type="submit" className="submit-btn secondary">Submit Financials Only</button>
-              <button type="button" onClick={() => setActiveTab('concessions')} className="submit-btn">Move to Tab 2</button>
-            </>
-          )}
-          {activeTab === 'concessions' && (
-            <>
-              <button type="submit" className="submit-btn secondary">Submit & Finish</button>
-              <button type="button" onClick={() => setActiveTab('experience')} className="submit-btn">Move to Tab 3</button>
-            </>
-          )}
-          {activeTab === 'experience' && (
-            <button type="submit" className="submit-btn">Submit Full Review</button>
-          )}
+            {activeTab === 'financial' && (<><button type="submit" className="submit-btn secondary">Submit Financials Only</button><button type="button" onClick={() => setActiveTab('concessions')} className="submit-btn">Move to Tab 2</button></>)}
+            {activeTab === 'concessions' && (<><button type="submit" className="submit-btn secondary">Submit & Finish</button><button type="button" onClick={() => setActiveTab('experience')} className="submit-btn">Move to Tab 3</button></>)}
+            {activeTab === 'experience' && (<button type="submit" className="submit-btn">Submit Full Review</button>)}
         </div>
       </form>
     </div>

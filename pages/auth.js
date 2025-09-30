@@ -13,7 +13,8 @@ export default function AuthPage() {
   const [isPending, setIsPending] = useState(false);
   const router = useRouter();
   
-  const { user, signup, login, loading } = useAuth();
+  const { user, signup, login, loading, loginWithGoogle} = useAuth();
+  
 
   useEffect(() => {
     if (!loading && user) {
@@ -59,6 +60,11 @@ export default function AuthPage() {
           <h2>{isLogin ? 'Welcome Back' : 'Create Your Account'}</h2>
           <p>{isLogin ? 'Sign in to your account to continue.' : 'Join our community to view and contribute data.'}</p>
           <form className="auth-form" onSubmit={handleSubmit}>
+              <div className="social-login">
+            <button onClick={loginWithGoogle} className="google-btn">
+              Login with Google
+            </button>
+            </div>
             <label>Email</label>
             <input
               type="email"

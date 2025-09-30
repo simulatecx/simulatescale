@@ -5,8 +5,9 @@ import { useAuth } from '../context/AuthContext';
 import { useUI } from '../context/UIContext';
 
 export default function Navbar() {
-  const { user, logout } = useAuth(); // Assuming logout is provided by your context
+ const { user, isAdmin, logout } = useAuth(); // Assuming logout is provided by your context
   const { openDiscountModal } = useUI();
+  
 
   return (
     <nav className="navbar">
@@ -18,7 +19,19 @@ export default function Navbar() {
           {/* We can add other links like 'Companies' back here later */}
           
           {user ? (
-            <>
+          <>
+              {isAdmin && (
+                <li className="nav-item">
+                  <Link href="/admin">
+                    <a className="nav-links">Admin</a>
+                  </Link>
+                </li>
+              )}
+              <li className="nav-item">
+                <Link href="/profile">
+                  <a className="nav-links">My Profile</a>
+                </Link>
+              </li>
               <li className="nav-item">
                 <button onClick={openDiscountModal} className="nav-links-button cta-button">
                   Submit a Discount
@@ -28,7 +41,7 @@ export default function Navbar() {
                 <button onClick={logout} className="nav-links-button">Logout</button>
               </li>
               {/* A profile icon could be added here in the future */}
-            </>
+          </>
           ) : (
             <>
               <li className="nav-item">

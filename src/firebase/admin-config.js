@@ -1,20 +1,18 @@
-import admin from 'firebase-admin';
-import { app } from './config'; // We can safely import the core app config
-
-// This is your unique Project ID
-const projectId = 'simulatescale';
-
-// Check if the admin app is already initialized to prevent errors
+import * as admin from 'firebase-admin';
+// This is the critical part: we check if the app is already initialized.
+// This prevents the "already exists" error in development environments.
 if (!admin.apps.length) {
   try {
-    // Initialize the admin app, explicitly providing the Project ID
     admin.initializeApp({
-      projectId: projectId,
+      credential: admin.credential.cert(
+        JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY)
+      ),
     });
-    console.log("Firebase Admin SDK initialized successfully for project:", projectId);
   } catch (error) {
-    console.error('Firebase Admin SDK initialization error:', error);
+    console.error('Firebase admin initialization error', error.stack);
   }
 }
 
-export default admin.firestore();
+// Export the initialized admin instance's firestore database
+const db = admin.firestore();
+export { db, admin };

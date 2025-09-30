@@ -4,7 +4,7 @@
   max-width: 800px;
   /* Remove margin and shadow, as the modal handles this now */
   margin: 0 auto; /* Keep it centered inside the modal */
-  padding: 10px; /* Adjust padding as needed */
+  padding: 5px; /* Adjust padding as needed */
   background: #fff;
   border-radius: 12px;
   /* box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1); */ /* REMOVE THIS LINE */
@@ -12,7 +12,7 @@
 
 .form-tabs {
   display: flex;
-  margin-bottom: 30px;
+  margin-bottom: 10px;
   border-bottom: 1px solid #e0e0e0;
 }
 
@@ -25,7 +25,7 @@
   font-size: 1rem;
   font-weight: 500;
   color: #6c757d;
-  border-bottom: 3px solid transparent;
+  border-bottom: 5px solid transparent;
   transition: all 0.3s ease;
 }
 
@@ -244,4 +244,13 @@ input[type="range"] {
   color: #28a745;
   margin-top: 15px;
   text-align: center;
+}
+
+.form-subsection-title {
+  font-size: 1.7rem; /* Increased font size */
+  font-weight: 00;
+  color: #333;
+  margin-bottom: 15px; /* Added more space below the title */
+  padding-bottom: 5px;
+  border-bottom: 5px solid #eee;
 }

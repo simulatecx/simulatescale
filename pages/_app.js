@@ -13,12 +13,17 @@ import '../src/components/Footer.css';
 import '../src/pages/AuthPage.css';
 import '../src/pages/CompaniesPage.css';
 import '../src/pages/CompanyPage.css';
+import '../src/pages/AdminPage.css';
 import '../src/components/FeaturedCompanies.css'; 
 import '../src/components/TopDiscounts.css'; 
 import '../src/components/Modal.css'; 
 import "slick-carousel/slick/slick.css"; 
 import "slick-carousel/slick/slick-theme.css";
-import '../src/components/Layout.css'; // <-- Import the new layout CSS
+import '../src/components/Layout.css';
+import '../src/components/VendorScoreDetails.css'
+import '../src/pages/ProfilePage.css';
+import '../src/components/CompanyFilters.css';
+
 
 // Import the component with its correct, exported name
 import { AuthContextProvider } from '../src/context/AuthContext';

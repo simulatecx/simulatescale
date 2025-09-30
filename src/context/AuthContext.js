@@ -1,62 +1,86 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { app } from '../firebase/config'; // Core app is safe to import
+// src/context/AuthContext.js
 
-export const AuthContext = createContext();
+import { createContext, useContext, useEffect, useState } from 'react';
+import {
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  GoogleAuthProvider, 
+  signInWithPopup, 
+} from 'firebase/auth';
+import { auth, db } from '../firebase/config';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+
+const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [services, setServices] = useState({ auth: null, db: null });
   const [loading, setLoading] = useState(true);
-  const [authFunctions, setAuthFunctions] = useState({});
+  // --- CHANGE 1: Add new state to track admin status ---
+  const [isAdmin, setIsAdmin] = useState(false);
+  
+  const loginWithGoogle = () => {
+  const provider = new GoogleAuthProvider();
+  return signInWithPopup(auth, provider);
+};
 
-  useEffect(() => {
-    const loadFirebase = async () => {
-      console.log("[AuthContext] Starting to load Firebase services...");
-      try {
-        const { getAuth, onAuthStateChanged, ...authFuncs } = await import('firebase/auth');
-        const { getFirestore } = await import('firebase/firestore');
-        
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        
-        console.log("[AuthContext] Firebase services loaded successfully.", { auth, db });
-        setServices({ auth, db });
-        setAuthFunctions(authFuncs);
+useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      // --- START OF NEW LOGIC ---
+      // Check for user document in Firestore
+      const userRef = doc(db, 'users', user.uid);
+      const docSnap = await getDoc(userRef);
 
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-          setUser(currentUser);
-          setLoading(false);
-          console.log("[AuthContext] Auth state changed. Loading finished.", { currentUser });
+      // If it's a new user, create their document
+      if (!docSnap.exists()) {
+        await setDoc(userRef, {
+          email: user.email,
+          name: user.displayName,
+          photoURL: user.photoURL,
+          createdAt: serverTimestamp(),
         });
-
-        return () => unsubscribe();
-      } catch (error) {
-        console.error("[AuthContext] Firebase initialization error:", error);
-        setLoading(false);
       }
-    };
+      // --- END OF NEW LOGIC ---
+      
+      setUser(user);
+      const idTokenResult = await user.getIdTokenResult();
+      setIsAdmin(!!idTokenResult.claims.admin);
+    } else {
+      setUser(null);
+      setIsAdmin(false);
+    }
+    setLoading(false);
+  });
 
-    loadFirebase();
-  }, []);
+  return () => unsubscribe();
+}, []);
 
-  const signup = useCallback(async (email, password) => {
-    if (!services.auth || !authFunctions.createUserWithEmailAndPassword) throw new Error("Auth service is not ready.");
-    return authFunctions.createUserWithEmailAndPassword(services.auth, email, password);
-  }, [services.auth, authFunctions]);
+  const signup = (email, password) => {
+    return createUserWithEmailAndPassword(auth, email, password);
+  };
 
-  const login = useCallback(async (email, password) => {
-    if (!services.auth || !authFunctions.signInWithEmailAndPassword) throw new Error("Auth service is not ready.");
-    return authFunctions.signInWithEmailAndPassword(services.auth, email, password);
-  }, [services.auth, authFunctions]);
+  const login = (email, password) => {
+    return signInWithEmailAndPassword(auth, email, password);
+  };
 
-  const logout = useCallback(async () => {
-    if (!services.auth || !authFunctions.signOut) throw new Error("Auth service is not ready.");
-    return authFunctions.signOut(services.auth);
-  }, [services.auth, authFunctions]);
+  const logout = async () => {
+    setUser(null);
+    await signOut(auth);
+  };
 
-  const value = { user, db: services.db, loading, signup, login, logout };
+  const value = {
+    user,
+    loading,
+    isAdmin, // --- CHANGE 3: Expose isAdmin to the rest of the app ---
+    signup,
+    login,
+    logout,
+    loginWithGoogle,
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
