@@ -1,110 +1,107 @@
-// pages/companies/index.js
-
-import { useState, useEffect, useMemo } from 'react';
-import { db } from '../../src/firebase/admin-config';
-import CompanyList from '../../src/components/CompanyList';
-import CompanyFilters from '../../src/components/CompanyFilters';
+import React, { useState, useMemo } from 'react';
 import Head from 'next/head';
+import { db } from '../../src/firebase/admin-config';
+import CompanyCard from '../../src/components/CompanyCard';
 
-function CompaniesPage({ companies }) {
-  const [allCompanies, setAllCompanies] = useState(companies);
-  const [filteredCompanies, setFilteredCompanies] = useState(companies);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('name-asc');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+const CompaniesPage = ({ companies }) => {
+  const [activeCategory, setActiveCategory] = useState('All');
 
-  // useMemo will re-calculate the list only when its dependencies change
-  const sortedAndFilteredCompanies = useMemo(() => {
-    let result = allCompanies.filter(company =>
-      company.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .filter(company => { // <-- ADD THIS NEW FILTER BLOCK
-      if (selectedCategory === 'all') return true;
-      return company.category === selectedCategory;
-    });
+  // useMemo will prevent recalculating the unique categories on every render
+  const categories = useMemo(() => {
+    const allCategories = companies.map(c => c.category).filter(Boolean);
+    return ['All', ...new Set(allCategories)];
+  }, [companies]);
 
-    result.sort((a, b) => {
-      switch (sortBy) {
-        case 'score-desc':
-          return b.avgVendorScore - a.avgVendorScore;
-        case 'discount-desc':
-          return b.avgDiscount - a.avgDiscount;
-        case 'name-asc':
-        default:
-          return a.name.localeCompare(b.name);
-      }
-    });
-
-    return result;
-  }, [allCompanies, searchTerm, sortBy, selectedCategory]);
+  const filteredCompanies = companies.filter(company => {
+    if (activeCategory === 'All') {
+      return true;
+    }
+    return company.category === activeCategory;
+  });
 
   return (
     <>
       <Head>
-        <title>All Companies | SimulateScale</title>
-        <meta name="description" content="Browse and compare enterprise software discounts and vendor scores." />
+        <title>All Companies - SimulateScale</title>
+        <meta name="description" content="Browse and search all enterprise software companies." />
       </Head>
-      <div className="container">
-        <h1>All Companies</h1>
-        <p>Browse our full list of companies to find discount data and vendor insights.</p>
-        <CompanyFilters
-          onSearch={setSearchTerm}
-          onSort={setSortBy}
-        />
-        <CompanyList companies={sortedAndFilteredCompanies} />
-      </div>
+      <main className="companies-page-main">
+        <h1 className="page-title">All Companies</h1>
+        <p className="page-description">
+          Explore all software vendors on the platform. Click on any company to view detailed discount data and vendor scores.
+        </p>
+
+        {/* --- NEW: Category Filter Tabs --- */}
+        <div className="category-tabs">
+          {categories.map(category => (
+            <button
+              key={category}
+              className={`tab-button ${activeCategory === category ? 'active' : ''}`}
+              onClick={() => setActiveCategory(category)}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+        
+        <div className="companies-grid">
+          {/* We now map over the filtered list */}
+          {filteredCompanies.map(company => (
+            <CompanyCard key={company.id} company={company} />
+          ))}
+        </div>
+      </main>
     </>
   );
-}
+};
 
-// Fetch and process all company and discount data on the server
-export async function getServerSideProps() {
-  const companiesSnapshot = await db.collection('companies').get();
-  const companies = companiesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+// The data-fetching logic remains the same, as it already gets all the data we need.
+export async function getStaticProps() {
+  try {
+    const companiesSnapshot = await db.collection('companies').get();
+    const baseCompanies = companiesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-  const discountsSnapshot = await db.collection('discounts').where('status', '==', 'verified').get();
-  const discounts = discountsSnapshot.docs.map(doc => doc.data());
+    const allDiscountsSnapshot = await db.collection('discounts').get();
+    const allDiscounts = allDiscountsSnapshot.docs.map(doc => doc.data());
 
-  // Create a map to aggregate discount data for each company
-  const companyDataMap = {};
-  companies.forEach(c => {
-    companyDataMap[c.name] = {
-      discounts: [],
-      scores: [],
-    };
-  });
+    const companiesWithCalculatedData = baseCompanies.map(company => {
+      const companyDiscounts = allDiscounts.filter(discount => discount.companyName === company.name);
 
-  discounts.forEach(d => {
-    if (companyDataMap[d.companyName]) {
-      companyDataMap[d.companyName].discounts.push(d.discountPercentage);
-      if (d.vendorScore) {
-        companyDataMap[d.companyName].scores.push(d.vendorScore);
-      }
-    }
-  });
-  
-  // Calculate averages and merge back into the main company list
-  const companiesWithStats = companies.map(company => {
-    const data = companyDataMap[company.name];
-    const avgDiscount = data.discounts.length > 0
-      ? Math.ceil(data.discounts.reduce((a, b) => a + b, 0) / data.discounts.length)
-      : 0;
-    const avgVendorScore = data.scores.length > 0
-      ? (data.scores.reduce((a, b) => a + b, 0) / data.scores.length).toFixed(1)
-      : 0;
-    
+      let totalDiscount = 0;
+      let totalVendorScore = 0;
+      let vendorScoreCount = 0;
+      const ratingKeys = ['salesProcessRating', 'understandingOfNeedsRating', 'negotiationTransparencyRating', 'implementationRating', 'trainingRating', 'productPromiseRating', 'supportQualityRating', 'successManagementRating', 'communicationRating', 'overallValueRating'];
+
+      companyDiscounts.forEach(discount => {
+        totalDiscount += discount.discountPercentage || 0;
+        if (discount.ratings) {
+          ratingKeys.forEach(key => {
+            if (typeof discount.ratings[key] === 'number') {
+              totalVendorScore += discount.ratings[key];
+              vendorScoreCount++;
+            }
+          });
+        }
+      });
+
+      const averageDiscount = companyDiscounts.length > 0 ? Math.round(totalDiscount / companyDiscounts.length) : 0;
+      const totalSubmissions = companyDiscounts.length;
+      const averageRawScore = vendorScoreCount > 0 ? totalVendorScore / vendorScoreCount : 0;
+      const vendorScore = parseFloat((averageRawScore / 2).toFixed(1));
+
+      return { ...company, averageDiscount, totalSubmissions, vendorScore };
+    });
+
     return {
-      ...company,
-      avgDiscount,
-      avgVendorScore,
+      props: {
+        companies: JSON.parse(JSON.stringify(companiesWithCalculatedData)),
+      },
+      revalidate: 3600,
     };
-  });
-
-  return {
-    props: {
-      companies: JSON.parse(JSON.stringify(companiesWithStats)),
-    },
-  };
+  } catch (error) {
+    console.error("Error fetching companies for companies page:", error);
+    return { props: { companies: [] } };
+  }
 }
 
 export default CompaniesPage;

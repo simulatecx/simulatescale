@@ -1,0 +1,56 @@
+.search-container {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.search-input {
+  width: 100%;
+  padding: 15px 25px; /* Increased padding */
+  font-size: 1.1rem;
+  border-radius: 50px;
+  border: 1px solid #dfe1e5;
+  outline: none;
+  /* Added a subtle shadow for depth, like in the example */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.search-input:focus {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* Enhanced shadow on focus */
+  border-color: #80bdff;
+}
+
+.search-results {
+  position: absolute;
+  top: calc(100% + 4px); /* A little space below the search bar */
+  left: 0;
+  right: 0;
+  background: #ffffff; /* High-contrast white */
+  border: 1px solid #dfe1e5;
+  border-radius: 12px; /* Softer radius */
+  list-style: none;
+  margin: 0;
+  padding: 8px 0; /* Padding top and bottom */
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+  /* A more defined shadow to make it pop */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.search-result-item {
+  padding: 12px 20px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  color: #212529; /* Darker text for better contrast */
+  font-weight: 600; /* Bolding the text as requested */
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover {
+  background-color: #f0f5ff; /* A subtle blue hover effect */
+}

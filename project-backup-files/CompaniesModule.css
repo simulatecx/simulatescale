@@ -1,0 +1,91 @@
+/* Companies Module Styles */
+.companies-module {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 800px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease-in-out;
+}
+
+.module-title {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.search-bar-container {
+    margin-bottom: 20px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 15px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+}
+
+.companies-list-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.companies-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.company-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.company-item a {
+    text-decoration: none;
+    color: #007bff;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.company-stats span {
+    margin-left: 15px;
+    font-size: 14px;
+    color: #555;
+}
+
+.no-results {
+    text-align: center;
+    padding: 20px;
+    color: #777;
+}
+
+.expand-button-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.expand-button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.expand-button:hover {
+    background-color: #0056b3;
+}
+
+/* Expanded State */
+.companies-module.expanded {
+    /* No specific styles needed for expansion in this version,
+       but you could add them here if you wanted a different look. */
+}

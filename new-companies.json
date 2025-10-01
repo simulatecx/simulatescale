@@ -1,0 +1,26 @@
+[
+  {
+    "id": "hubspot",
+    "name": "HubSpot",
+    "category": "CRM & Sales Enablement",
+    "logoUrl": "https://logo.clearbit.com/hubspot.com"
+  },
+  {
+    "id": "oracle-netsuite",
+    "name": "Oracle NetSuite",
+    "category": "ERP",
+    "logoUrl": "https://logo.clearbit.com/netsuite.com"
+  },
+  {
+    "id": "workday",
+    "name": "Workday",
+    "category": "HR Tech",
+    "logoUrl": "https://logo.clearbit.com/workday.com"
+  },
+  {
+    "id": "snowflake",
+    "name": "Snowflake",
+    "category": "Cloud & Data",
+    "logoUrl": "https://logo.clearbit.com/snowflake.com"
+  }
+]
