@@ -1,50 +1,29 @@
-.companies-page-container {
+.companies-page-main {
   max-width: 1200px;
-  margin: 40px auto;
+  margin: 20px auto;
   padding: 20px;
 }
 
-.companies-header {
-  text-align: center;
-  margin-bottom: 40px;
-  padding: 20px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-}
-
-.companies-header h1 {
+.page-title {
   font-size: 2.5rem;
-  margin-bottom: 10px;
-  color: #333;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1rem;
+  color: #212529;
 }
 
-.companies-header p {
+.page-description {
   font-size: 1.1rem;
-  color: #666;
-  max-width: 600px;
-  margin: 0 auto;
+  text-align: center;
+  color: #6c757d;
+  margin-bottom: 2.5rem;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-/* --- NEW SEARCH BAR STYLES --- */
-.search-bar-container {
-  margin-top: 30px;
-  display: flex;
-  justify-content: center;
-}
-
-.search-input {
-  width: 100%;
-  max-width: 500px;
-  padding: 12px 20px;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 50px; /* Pill shape */
-  outline: none;
-  transition: border-color 0.3s, box-shadow 0.3s;
-}
-
-.search-input:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+.companies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
 }

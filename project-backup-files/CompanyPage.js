@@ -1,15 +1,15 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { db } from '../firebase/config';
+import { db } from '../src/firebase/config';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 
 // components
-import DiscountTable from '../components/DiscountTable';
-import DiscountForm from '../components/DiscountForm';
-import DataSummary from '../components/FeaturedCompanies';
+import DiscountTable from '../src/components/DiscountTable';
+import DiscountForm from '../src/components/DiscountForm';
+import DataSummary from '../src/components/FeaturedCompanies';
 
 // context
-import { useAuthContext } from '../context/AuthContext';
+import { useAuthContext } from '../src/context/AuthContext';
 
 const CompanyPage = () => {
   const { id } = useParams();
