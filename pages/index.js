@@ -5,6 +5,9 @@ import FeaturedCompanies from '../src/components/FeaturedCompanies';
 import CategoryBrowser from '../src/components/CategoryBrowser';
 
 const HomePage = ({ companies }) => {
+  // We'll add a log here to see what data the component actually receives
+  console.log('[CLIENT-SIDE] HomePage component received companies:', companies);
+  
   return (
     <>
       <Head>
@@ -23,25 +26,25 @@ const HomePage = ({ companies }) => {
 }
 
 export async function getStaticProps() {
+  console.log("\n--- [SERVER-SIDE DEBUG] Starting getStaticProps for homepage ---");
   try {
     // 1. Fetch all companies
+    console.log("[SERVER-SIDE DEBUG] Step 1: Fetching documents from 'companies' collection...");
     const companiesSnapshot = await db.collection('companies').get();
     const baseCompanies = companiesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    
+    console.log(`[SERVER-SIDE DEBUG] --> Found ${baseCompanies.length} base companies.`);
+
     // 2. Fetch all discounts
+    console.log("[SERVER-SIDE DEBUG] Step 2: Fetching documents from 'discounts' collection...");
     const allDiscountsSnapshot = await db.collection('discounts').get();
     const allDiscounts = allDiscountsSnapshot.docs.map(doc => doc.data());
+    console.log(`[SERVER-SIDE DEBUG] --> Found ${allDiscounts.length} total discounts.`);
 
     // 3. Process the data with the CORRECT filtering logic
     const companiesWithCalculatedData = baseCompanies.map(company => {
-      
-      // THE FIX: We now filter by matching company.name with discount.companyName
       const companyDiscounts = allDiscounts.filter(discount => discount.companyName === company.name);
-
-      // --- Calculation logic (this part was always correct) ---
-      let totalDiscount = 0;
-      let totalVendorScore = 0;
-      let vendorScoreCount = 0;
+      
+      let totalDiscount = 0, totalVendorScore = 0, vendorScoreCount = 0;
       const ratingKeys = ['salesProcessRating', 'understandingOfNeedsRating', 'negotiationTransparencyRating', 'implementationRating', 'trainingRating', 'productPromiseRating', 'supportQualityRating', 'successManagementRating', 'communicationRating', 'overallValueRating'];
 
       companyDiscounts.forEach(discount => {
@@ -63,6 +66,8 @@ export async function getStaticProps() {
 
       return { ...company, averageDiscount, totalSubmissions, vendorScore };
     });
+    
+    console.log("[SERVER-SIDE DEBUG] Step 3: Finished calculating data. Passing to page.");
 
     return {
       props: {
@@ -72,7 +77,7 @@ export async function getStaticProps() {
     };
 
   } catch (error) {
-    console.error("Error fetching and calculating company data for homepage:", error);
+    console.error("[SERVER-SIDE DEBUG] 🔥🔥🔥 FATAL ERROR in getStaticProps:", error);
     return { props: { companies: [] } };
   }
 }

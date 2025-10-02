@@ -1,69 +1,96 @@
-/* src/pages/ProfilePage.css */
-
-.profile-page-container {
-  max-width: 900px;
-  margin: 40px auto;
+/* --- New Profile Page Dashboard Styles --- */
+.profile-page {
+  display: flex;
+  max-width: 1400px;
+  margin: 20px auto;
   padding: 20px;
+  gap: 30px;
+  align-items: flex-start;
 }
 
-.profile-page-container h1 {
-  font-size: 2.5rem;
-  margin-bottom: 30px;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 15px;
-}
-
-.submissions-list {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
-}
-
-.submission-card {
-  background: #fff;
-  border: 1px solid #e0e0e0;
+/* Sidebar Styling */
+.profile-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  background-color: #f8f9fa;
   border-radius: 8px;
   padding: 20px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-  transition: box-shadow 0.2s ease-in-out;
+  border: 1px solid #e9ecef;
 }
 
-.submission-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+.user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #dee2e6;
 }
 
-.submission-card h3 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  font-size: 1.5rem;
+.user-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #007bff;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: 500;
+  margin-bottom: 10px;
 }
 
-.submission-card p {
-  margin: 5px 0;
-  line-height: 1.6;
+.user-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #343a40;
+  word-break: break-all;
 }
 
-.submission-status {
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid #eee;
-  text-align: right;
+.profile-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
-.submission-status span {
-  padding: 5px 10px;
-  border-radius: 5px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
+.profile-nav li a {
+  display: block;
+  padding: 12px 15px;
+  text-decoration: none;
+  color: #495057;
+  font-weight: 500;
+  border-radius: 6px;
+  transition: background-color 0.2s;
 }
 
-.submission-status span.pending {
-  color: #805b10;
-  background-color: #fff8e1;
+.profile-nav li.active a {
+  background-color: #e7f1ff;
+  color: #0056b3;
 }
 
-.submission-status span.verified {
-  color: #1e6648;
-  background-color: #e6f4ea;
+.profile-nav li a:hover {
+  background-color: #dee2e6;
+}
+
+/* Main Content Styling */
+.profile-content {
+  flex-grow: 1;
+}
+
+.content-title {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: #212529;
+}
+
+.content-description {
+  color: #6c757d;
+  margin-bottom: 2rem;
+}
+
+.submissions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
 }
