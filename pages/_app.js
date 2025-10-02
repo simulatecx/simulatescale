@@ -24,6 +24,7 @@ import '../src/pages/CompaniesPage.css';
 import '../src/components/CompanyCard.css';
 import '../src/components/CategoryBrowser.css';
 import '../src/components/SearchBar.css';
+import '../src/components/SubmissionDetails.css';
 
 // Import the component with its correct, exported name
 import { AuthContextProvider } from '../src/context/AuthContext';
@@ -31,7 +32,20 @@ import { UIProvider, useUI } from '../src/context/UIContext';
 import Modal from '../src/components/Modal';
 import DiscountForm from '../src/components/DiscountForm';
 import Layout from '../src/components/Layout'; // <-- Import the Layout component
+import SubmissionDetails from '../src/components/SubmissionDetails';
 
+
+// Define a new GlobalModal for viewing submissions
+function GlobalSubmissionViewModal() {
+  const { isSubmissionModalOpen, closeSubmissionModal, submissionToView } = useUI();
+  return (
+    <Modal isOpen={isSubmissionModalOpen} onClose={closeSubmissionModal}>
+      <SubmissionDetails submission={submissionToView} />
+    </Modal>
+  );
+}
+
+// Your existing GlobalModal for the form
 function GlobalModal() {
   const { isDiscountModalOpen, closeDiscountModal } = useUI();
   return (
@@ -45,10 +59,12 @@ function MyApp({ Component, pageProps }) {
   return (
     <AuthContextProvider>
       <UIProvider>
-        <Layout> {/* The Layout component now wraps every page */}
+        <Layout>
           <Component {...pageProps} />
         </Layout>
+        {/* Render both modals */}
         <GlobalModal />
+        <GlobalSubmissionViewModal /> 
       </UIProvider>
     </AuthContextProvider>
   );

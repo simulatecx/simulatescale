@@ -1,86 +1,58 @@
-// src/context/AuthContext.js
-
 import { createContext, useContext, useEffect, useState } from 'react';
-import {
-  onAuthStateChanged,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  GoogleAuthProvider, 
-  signInWithPopup, 
-} from 'firebase/auth';
-import { auth, db } from '../firebase/config';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { onIdTokenChanged, getAuth } from 'firebase/auth';
+import { app } from '../firebase/config';
 
 const AuthContext = createContext();
 
-export const useAuth = () => useContext(AuthContext);
-
 export const AuthContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false); // NEW: State to hold admin status
   const [loading, setLoading] = useState(true);
-  // --- CHANGE 1: Add new state to track admin status ---
-  const [isAdmin, setIsAdmin] = useState(false);
-  
-  const loginWithGoogle = () => {
-  const provider = new GoogleAuthProvider();
-  return signInWithPopup(auth, provider);
-};
+  const auth = getAuth(app);
 
-useEffect(() => {
-  const unsubscribe = onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      // --- START OF NEW LOGIC ---
-      // Check for user document in Firestore
-      const userRef = doc(db, 'users', user.uid);
-      const docSnap = await getDoc(userRef);
+  useEffect(() => {
+    const unsubscribe = onIdTokenChanged(auth, async (user) => {
+      setLoading(true);
+      setIsAdmin(false); // Reset admin status on change
 
-      // If it's a new user, create their document
-      if (!docSnap.exists()) {
-        await setDoc(userRef, {
-          email: user.email,
-          name: user.displayName,
-          photoURL: user.photoURL,
-          createdAt: serverTimestamp(),
+      if (user) {
+        setUser(user);
+        const tokenResult = await user.getIdTokenResult(); // Get the full token result
+        
+        // THE FIX: Check for the 'admin' custom claim
+        setIsAdmin(tokenResult.claims.admin === true);
+
+        const token = await user.getIdToken();
+        // Set the session cookie by calling our API route
+        fetch('/api/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        });
+
+      } else {
+        setUser(null);
+        // Clear the session cookie by calling our API route
+        fetch('/api/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: null }),
         });
       }
-      // --- END OF NEW LOGIC ---
-      
-      setUser(user);
-      const idTokenResult = await user.getIdTokenResult();
-      setIsAdmin(!!idTokenResult.claims.admin);
-    } else {
-      setUser(null);
-      setIsAdmin(false);
-    }
-    setLoading(false);
-  });
+      setLoading(false);
+    });
 
-  return () => unsubscribe();
-}, []);
+    return () => unsubscribe();
+  }, [auth]);
 
-  const signup = (email, password) => {
-    return createUserWithEmailAndPassword(auth, email, password);
-  };
+  // We now provide 'isAdmin' to the rest of the application
+  const value = { user, isAdmin, loading };
 
-  const login = (email, password) => {
-    return signInWithEmailAndPassword(auth, email, password);
-  };
-
-  const logout = async () => {
-    setUser(null);
-    await signOut(auth);
-  };
-
-  const value = {
-    user,
-    loading,
-    isAdmin, // --- CHANGE 3: Expose isAdmin to the rest of the app ---
-    signup,
-    login,
-    logout,
-    loginWithGoogle,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
+
+export const useAuth = () => useContext(AuthContext);
