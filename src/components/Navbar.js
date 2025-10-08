@@ -1,36 +1,41 @@
-// src/components/Navbar.js
-
+import React from 'react'; // Added React import for best practice
 import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
 import { useUI } from '../context/UIContext';
+import { useRouter } from 'next/router'; // Import useRouter
 
 export default function Navbar() {
- const { user, isAdmin, logout } = useAuth(); // Assuming logout is provided by your context
+  const { user, isAdmin, logout } = useAuth();
   const { openDiscountModal } = useUI();
+  const router = useRouter(); // Initialize the router
   
+  // This function handles both logging out and redirecting the user
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push('/auth'); // Redirect to auth page after logout
+    } catch (error) {
+      console.error("Failed to log out:", error);
+    }
+  };
 
   return (
     <nav className="navbar">
       <div className="navbar-container">
-        <Link href="/">
+        {/* Added legacyBehavior for proper link handling with <a> tags */}
+        <Link href="/" legacyBehavior>
           <a className="navbar-logo">SimulateScale</a>
         </Link>
         <ul className="nav-menu">
-          {/* We can add other links like 'Companies' back here later */}
-          
           {user ? (
-          <>
+            <>
               {isAdmin && (
                 <li className="nav-item">
-                  <Link href="/admin">
-                    <a className="nav-links">Admin</a>
-                  </Link>
+                  <Link href="/admin" legacyBehavior><a className="nav-links">Admin</a></Link>
                 </li>
               )}
               <li className="nav-item">
-                <Link href="/profile">
-                  <a className="nav-links">My Profile</a>
-                </Link>
+                <Link href="/profile" legacyBehavior><a className="nav-links">My Profile</a></Link>
               </li>
               <li className="nav-item">
                 <button onClick={openDiscountModal} className="nav-links-button cta-button">
@@ -38,10 +43,10 @@ export default function Navbar() {
                 </button>
               </li>
               <li className="nav-item">
-                <button onClick={logout} className="nav-links-button">Logout</button>
+                {/* THE FIX: The button now correctly calls handleLogout */}
+                <button onClick={handleLogout} className="nav-links-button">Logout</button>
               </li>
-              {/* A profile icon could be added here in the future */}
-          </>
+            </>
           ) : (
             <>
               <li className="nav-item">
@@ -50,9 +55,7 @@ export default function Navbar() {
                 </button>
               </li>
               <li className="nav-item">
-                <Link href="/auth">
-                  <a className="nav-links">Login / Sign Up</a>
-                </Link>
+                <Link href="/auth" legacyBehavior><a className="nav-links">Login / Sign Up</a></Link>
               </li>
             </>
           )}

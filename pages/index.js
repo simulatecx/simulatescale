@@ -1,13 +1,13 @@
 import Head from 'next/head';
 import { db } from '../src/firebase/admin-config'; 
 import HeroSection from '../src/components/HeroSection';
-import FeaturedCompanies from '../src/components/FeaturedCompanies';
-import CategoryBrowser from '../src/components/CategoryBrowser';
+import ValueProps from '../src/components/ValueProps'; // Our new component
+import CategoryBrowser from '../src/components/CategoryBrowser'; // Your existing component
+
+// Note: I'm leaving out FeaturedCompanies for now as requested, 
+// but you can easily add it back in if you wish.
 
 const HomePage = ({ companies }) => {
-  // We'll add a log here to see what data the component actually receives
-  console.log('[CLIENT-SIDE] HomePage component received companies:', companies);
-  
   return (
     <>
       <Head>
@@ -17,30 +17,26 @@ const HomePage = ({ companies }) => {
       </Head>
 
       <main>
+        {/* Your existing Hero Section */}
         <HeroSection />
+        {/* Your existing "Browse by Category" block */}
         <CategoryBrowser companies={companies} />
-        <FeaturedCompanies />
+        {/* The new "Why SimulateScale?" block, placed right below the hero */}
+        <ValueProps />
       </main>
     </>
   );
 }
 
+// This data-fetching function is correct and remains unchanged.
 export async function getStaticProps() {
-  console.log("\n--- [SERVER-SIDE DEBUG] Starting getStaticProps for homepage ---");
   try {
-    // 1. Fetch all companies
-    console.log("[SERVER-SIDE DEBUG] Step 1: Fetching documents from 'companies' collection...");
     const companiesSnapshot = await db.collection('companies').get();
     const baseCompanies = companiesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    console.log(`[SERVER-SIDE DEBUG] --> Found ${baseCompanies.length} base companies.`);
 
-    // 2. Fetch all discounts
-    console.log("[SERVER-SIDE DEBUG] Step 2: Fetching documents from 'discounts' collection...");
     const allDiscountsSnapshot = await db.collection('discounts').get();
     const allDiscounts = allDiscountsSnapshot.docs.map(doc => doc.data());
-    console.log(`[SERVER-SIDE DEBUG] --> Found ${allDiscounts.length} total discounts.`);
 
-    // 3. Process the data with the CORRECT filtering logic
     const companiesWithCalculatedData = baseCompanies.map(company => {
       const companyDiscounts = allDiscounts.filter(discount => discount.companyName === company.name);
       
@@ -66,8 +62,6 @@ export async function getStaticProps() {
 
       return { ...company, averageDiscount, totalSubmissions, vendorScore };
     });
-    
-    console.log("[SERVER-SIDE DEBUG] Step 3: Finished calculating data. Passing to page.");
 
     return {
       props: {
@@ -77,7 +71,7 @@ export async function getStaticProps() {
     };
 
   } catch (error) {
-    console.error("[SERVER-SIDE DEBUG] 🔥🔥🔥 FATAL ERROR in getStaticProps:", error);
+    console.error("Error fetching companies for homepage:", error);
     return { props: { companies: [] } };
   }
 }

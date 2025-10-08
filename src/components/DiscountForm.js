@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-// CORRECTED: All imports are now clean and in one place.
 import { db } from '../firebase/config';
 import { collection, addDoc, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { useUI } from '../context/UIContext';
+// THE FIX: Added 'formSections' to the import list
+import { initialFormData, formSections, allRatingKeys } from '../config/formConfig';
 
 // Helper function to generate color for score ratings
 const getScoreColor = (score) => {
-  const hue = ((score - 1) / 9) * 120; // 0 (red) to 120 (green)
+  const hue = ((score - 1) / 9) * 120;
   return `hsl(${hue}, 90%, 45%)`;
 };
 
@@ -22,47 +23,15 @@ const ToggleSwitch = ({ label, name, checked, onChange }) => (
   </div>
 );
 
-// This object contains all fields for the entire form
-const initialFormData = {
-  // Tab 1 Fields
-  saasProduct: '', companySize: '', industry: '', listPrice: '',
-  finalPrice: '', licensesPurchased: '', contractTerm: '1 year',
-  paymentTerms: 'Annual upfront', primaryUseCase: '',
-  oneTimeCredits: false, oneTimeCreditsAmount: 5000,
-  // Tab 2 Fields
-  concessions: {
-    netTerms: 'Net 30',
-    deferredPayments: { software: false, implementation: false },
-    extendedRamp: 0, trainingCredits: false, futureDiscountLock: false,
-    futureDiscountLockInValue: 0, renewalPriceIncreaseLock: 0,
-    legalTermConcessions: false, legalConcessionsDetails: '',
-  },
-  // Tab 3 Fields
-  ratings: {
-    salesProcessRating: 5, understandingOfNeedsRating: 5,
-    negotiationTransparencyRating: 5, implementationRating: 5,
-    trainingRating: 5, productPromiseRating: 5, supportQualityRating: 5,
-    successManagementRating: 5, communicationRating: 5, overallValueRating: 5,
-  }
-};
-
 const DiscountForm = ({ onSubmission }) => {
   const [formData, setFormData] = useState(initialFormData);
   const [companies, setCompanies] = useState([]);
   const [activeTab, setActiveTab] = useState('financial');
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [liveDiscount, setLiveDiscount] = useState(0);
-  const { user } = useAuth(); // Get the current user
-  
-  // NOTE: I am adding the state/context from our plan, but they won't be used until the next step.
-  // This is safe and will not break anything.
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [liveDiscount, setLiveDiscount] = useState(0);
+  const { user } = useAuth();
   const { submissionToEdit, setSubmissionToEdit } = useUI();
-
-
-  // SECTION: Data Fetching and Calculations
-  // =======================================
 
   useEffect(() => {
     const fetchCompanies = async () => {
@@ -75,6 +44,20 @@ const DiscountForm = ({ onSubmission }) => {
   }, []);
 
   useEffect(() => {
+    if (submissionToEdit) {
+      const mergedData = {
+        ...initialFormData, ...submissionToEdit,
+        concessions: { ...initialFormData.concessions, ...(submissionToEdit.concessions || {}) },
+        ratings: { ...initialFormData.ratings, ...(submissionToEdit.ratings || {}) },
+      };
+      setFormData(mergedData);
+      setActiveTab('financial');
+    } else {
+      setFormData(initialFormData);
+    }
+  }, [submissionToEdit]);
+
+  useEffect(() => {
     const { listPrice, finalPrice } = formData;
     if (listPrice > 0 && finalPrice > 0 && parseFloat(listPrice) >= parseFloat(finalPrice)) {
       const discount = ((listPrice - finalPrice) / listPrice) * 100;
@@ -84,38 +67,9 @@ const DiscountForm = ({ onSubmission }) => {
     }
   }, [formData.listPrice, formData.finalPrice]);
 
-useEffect(() => {
-  if (submissionToEdit) {
-    // THE FIX: Merge the initial structure with the saved data
-    // This ensures that 'concessions' and 'ratings' objects always exist.
-    const mergedData = {
-      ...initialFormData,
-      ...submissionToEdit,
-      concessions: {
-        ...initialFormData.concessions,
-        ...(submissionToEdit.concessions || {}),
-      },
-      ratings: {
-        ...initialFormData.ratings,
-        ...(submissionToEdit.ratings || {}),
-      },
-    };
-    setFormData(mergedData);
-    setActiveTab('financial');
-  } else {
-    setFormData(initialFormData);
-  }
-}, [submissionToEdit]);
-  // SECTION: Event Handlers
-  // =========================
-
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    if (name === 'oneTimeCredits') {
-      setFormData(prev => ({ ...prev, [name]: checked }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const handleConcessionChange = (e) => {
@@ -134,287 +88,181 @@ useEffect(() => {
 
   const handleRatingChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      ratings: { ...prev.ratings, [name]: parseInt(value, 10) }
-    }));
+    setFormData(prev => ({ ...prev, ratings: { ...prev.ratings, [name]: parseInt(value, 10) } }));
   };
 
-const handleSubmit = async (e, submittedFromTab) => {
-  e.preventDefault();
-  if (!user) {
-    setError("You must be logged in to submit a discount.");
-    return;
-  }
+  const handleSubmit = async (e, submittedFromTab) => {
+    e.preventDefault();
+    if (!user) {
+      setError("You must be logged in to submit.");
+      return;
+    }
+    setError('');
 
-  setError('');
-  setSuccess('');
-  if (submittedFromTab !== 'experience') {
-    const proceed = window.confirm("Are you sure you don't want to fill out additional details? More details unlock more company pages.");
-    if (!proceed) return;
-  }
+    const { listPrice, finalPrice, saasProduct } = formData;
+    if (!saasProduct || !listPrice || !finalPrice) {
+      setError("Please fill out all required fields in the Financial tab.");
+      setActiveTab('financial');
+      return;
+    }
+    
+    const ratingValues = Object.values(formData.ratings);
+    const vendorScore = ratingValues.reduce((acc, val) => acc + val, 0) / ratingValues.length;
+    let submissionCompleteness = 'minimal';
+    if (submittedFromTab === 'concessions') submissionCompleteness = 'standard';
+    if (submittedFromTab === 'experience') submissionCompleteness = 'full';
 
-  const { listPrice, finalPrice, saasProduct, ratings } = formData;
-  if (!saasProduct || !listPrice || !finalPrice) {
-    setError("Please fill out all required fields in the Financial tab.");
-    setActiveTab('financial');
-    return;
-  }
+    const finalSubmissionData = {
+      ...formData,
+      userId: user.uid,
+      status: submissionToEdit ? formData.status : 'pending',
+      companyName: saasProduct,
+      discountPercentage: liveDiscount,
+      vendorScore: parseFloat(vendorScore.toFixed(1)),
+      submissionCompleteness,
+      createdAt: submissionToEdit ? formData.createdAt : new Date(),
+      updatedAt: new Date(),
+    };
 
-  const ratingValues = Object.values(ratings);
-  const vendorScore = ratingValues.reduce((acc, val) => acc + val, 0) / ratingValues.length;
-  let submissionCompleteness = 'minimal';
-  if (submittedFromTab === 'concessions') submissionCompleteness = 'standard';
-  if (submittedFromTab === 'experience') submissionCompleteness = 'full';
-
-  // --- THE FIX IS HERE ---
-  // We create a new, "clean" object that ONLY contains the fields we want.
-  // This strips out any accidental event objects from the formData state.
-  const cleanData = {
-    saasProduct: formData.saasProduct,
-    companySize: formData.companySize,
-    industry: formData.industry,
-    listPrice: formData.listPrice,
-    finalPrice: formData.finalPrice,
-    licensesPurchased: formData.licensesPurchased,
-    contractTerm: formData.contractTerm,
-    paymentTerms: formData.paymentTerms,
-    primaryUseCase: formData.primaryUseCase,
-    oneTimeCredits: formData.oneTimeCredits,
-    oneTimeCreditsAmount: formData.oneTimeCreditsAmount,
-    concessions: formData.concessions,
-    ratings: formData.ratings,
-    userId: user.uid,
-    status: 'pending',
-    companyName: saasProduct,
-    tier: 'SMB', // Can be made dynamic later
-    discountPercentage: liveDiscount,
-    vendorScore: parseFloat(vendorScore.toFixed(1)),
-    submissionCompleteness,
-    createdAt: new Date(),
-  };
-
-  try {
-    await addDoc(collection(db, 'discounts'), cleanData); // We now save the cleanData object
-
-    setSuccess('Your discount has been submitted successfully! Thank you.');
-
-    // This can be simplified to show the success message
-    setIsSubmitted(true);
-    setTimeout(() => {
+    try {
+      if (submissionToEdit) {
+        const docRef = doc(db, 'discounts', submissionToEdit.id);
+        await updateDoc(docRef, finalSubmissionData);
+      } else {
+        await addDoc(collection(db, 'discounts'), finalSubmissionData);
+      }
+      
+      setIsSubmitted(true);
+      setTimeout(() => {
         if (onSubmission) onSubmission();
         setIsSubmitted(false);
-        setFormData(initialFormData);
-        setActiveTab('financial');
-    }, 3000);
+        setSubmissionToEdit(null);
+      }, 3000);
 
-  } catch (err) {
-    setError('There was an error submitting your form. Please try again.');
-    console.error(err);
-  }
-};
-
-  // Thank you Message
-  // =======================
+    } catch (err) {
+      setError('There was an error submitting your form. Please try again.');
+      console.error(err);
+    }
+  };
 
   if (isSubmitted) {
-  return (
-    <div className="form-success-message">
-      <h2>Thank You!</h2>
-      <p>Your submission has been received and is pending verification.</p>
-    </div>
-  );
-}
-  // SECTION: JSX Rendering
-  // ========================
+    return (
+      <div className="form-success-message">
+        <h2>Thank You!</h2>
+        <p>Your submission has been received and is pending verification.</p>
+      </div>
+    );
+  }
+                    // Discount form Container
   return (
     <div className="discount-form-container">
       <h2>{submissionToEdit ? 'Edit Your Submission' : 'Submit a Discount'}</h2>
       <div className="form-tabs">
         <button onClick={() => setActiveTab('financial')} className={activeTab === 'financial' ? 'active' : ''}>1. Financial Incentives</button>
-        <button onClick={() => setActiveTab('concessions')} className={activeTab === 'concessions' ? 'active' : ''}>2. Additional Concessions (Optional)</button>
+        <button onClick={() => setActiveTab('concessions')} className={activeTab === 'concessions' ? 'active' : ''}>2. Additional Concessions</button>
         <button onClick={() => setActiveTab('experience')} className={activeTab === 'experience' ? 'active' : ''}>3. Vendor Experience</button>
       </div>
       <form onSubmit={(e) => handleSubmit(e, activeTab)} className="discount-form">
         
-        {/* --- TAB 1: FINANCIAL INCENTIVES --- */}
-        {activeTab === 'financial' && (
+{/* --- NEW, REFACTORED Financial TAB --- */}
+        {activeTab === 'financial' && ( 
           <div className="form-section">
-            <select name="saasProduct" value={formData.saasProduct} onChange={handleInputChange} required>
-              <option value="">Which SaaS Product Did You Purchase?*</option>
-              {companies.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-            </select>
-            <select name="companySize" value={formData.companySize} onChange={handleInputChange}>
-              <option value="">Your Company Size</option>
-              <option value="1-50">1-50 Employees</option>
-              <option value="51-200">51-200 Employees</option>
-              <option value="201-1000">201-1,000 Employees</option>
-              <option value="1001+">1,001+ Employees</option>
-            </select>
-            <select name="industry" value={formData.industry} onChange={handleInputChange}>
-              <option value="">Your Industry</option>
-              <option value="Financial Services">Financial Services</option>
-              <option value="Insurance">Insurance</option>
-              <option value="Retail">Retail</option>
-              <option value="Utilities">Utilities</option>
-              <option value="Machinery">Machinery</option>
-              <option value="Government">Government / PubSec</option>
-              <option value="Non Profit">Non Profit</option>
-            </select>
-            <input type="number" name="listPrice" placeholder="Annual Contract Value (List Price)*" value={formData.listPrice} onChange={handleInputChange} required />
-            <input type="number" name="finalPrice" placeholder="Final Amount Paid (After Discount)*" value={formData.finalPrice} onChange={handleInputChange} required />
-            <select name="licensesPurchased" value={formData.licensesPurchased} onChange={handleInputChange}>
-              <option value="">Number of Licenses Purchased</option>
-              <option value="1-10">1-10</option>
-              <option value="11-50">11-50</option>
-              <option value="51-200">51-200</option>
-              <option value="201+">201+</option>
-            </select>
-            <div className="radio-group">
-              <strong>Contract Term:</strong>
-              <label><input type="radio" name="contractTerm" value="1 year" checked={formData.contractTerm === '1 year'} onChange={handleInputChange} /> 1 Year</label>
-              <label><input type="radio" name="contractTerm" value="2 years" checked={formData.contractTerm === '2 years'} onChange={handleInputChange} /> 2 Years</label>
-              <label><input type="radio" name="contractTerm" value="3 years" checked={formData.contractTerm === '3 years'} onChange={handleInputChange} /> 3+ Years</label>
-            </div>
-            <div className="radio-group">
-              <strong>Payment Terms:</strong>
-              <label><input type="radio" name="paymentTerms" value="Monthly" checked={formData.paymentTerms === 'Monthly'} onChange={handleInputChange} /> Monthly</label>
-              <label><input type="radio" name="paymentTerms" value="Annual upfront" checked={formData.paymentTerms === 'Annual upfront'} onChange={handleInputChange} /> Annual</label>
-              <label><input type="radio" name="paymentTerms" value="Multi-year prepay" checked={formData.paymentTerms === 'Multi-year prepay'} onChange={handleInputChange} /> Multi-Year</label>
-            </div>
-            <input type="text" name="primaryUseCase" placeholder="Primary Use Case" value={formData.primaryUseCase} onChange={handleInputChange} />
-            <div className="form-group">
-              <ToggleSwitch label="One Time Credits Received?" name="oneTimeCredits" checked={formData.oneTimeCredits} onChange={handleInputChange} />
-              {formData.oneTimeCredits && (
-                <>
-                  <label>Amount: <span>${parseInt(formData.oneTimeCreditsAmount, 10).toLocaleString()}</span></label>
-                  <input type="range" min="500" max="1000000" step="500" name="oneTimeCreditsAmount" value={formData.oneTimeCreditsAmount} onChange={handleInputChange} />
-                </>
-              )}
-            </div>
+            {formSections.financial.fields.map(field => {
+              switch (field.type) {
+                case 'select':
+                  return ( <select key={field.name} name={field.name} value={formData[field.name]} onChange={handleInputChange} required={field.label.includes('*')}>
+                      <option value="">{field.label}</option>
+                      {field.name === 'saasProduct' ? companies.map(c => <option key={c.id} value={c.name}>{c.name}</option>) : field.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select> );
+                case 'radio':
+                  return ( <div className="radio-group" key={field.name}><strong>{field.label}:</strong>
+                      {field.options.map(opt => ( <label key={opt}><input type="radio" name={field.name} value={opt} checked={formData[field.name] === opt} onChange={handleInputChange} />{opt}</label> ))}
+                    </div> );
+                case 'toggle':
+                  return ( <div className="form-group" key={field.name}><ToggleSwitch label={field.label} name={field.name} checked={formData[field.name]} onChange={handleInputChange} /></div> );
+                case 'range':
+                  return ( formData[field.conditionalField] && ( <div className="form-group" key={field.name}><label>{field.label}: <span>${parseInt(formData[field.name], 10).toLocaleString()}</span></label><input type="range" min={field.min} max={field.max} step={field.step} name={field.name} value={formData[field.name]} onChange={handleInputChange} /></div> ));
+                default:
+                  return ( <input key={field.name} type={field.type} name={field.name} placeholder={field.placeholder || field.label} value={formData[field.name]} onChange={handleInputChange} required={field.label.includes('*')} /> );
+              }
+            })}
             <div className="live-discount-display">Calculated Discount: <span>{liveDiscount}%</span></div>
           </div>
         )}
 
-        {/* --- TAB 2: ADDITIONAL CONCESSIONS --- */}
+{/* --- NEW, REFACTORED CONCESSIONS TAB --- */}
         {activeTab === 'concessions' && (
           <div className="form-section">
-            <div className="form-subsection">
-              <h3 className="form-subsection-title">Payment & Billing</h3>
-              <div className="form-group">
-                <label>Extended Ramp Period: <span>{formData.concessions.extendedRamp} days</span></label>
-                <input type="range" min="0" max="180" step="30" name="extendedRamp" value={formData.concessions.extendedRamp} onChange={handleConcessionChange} />
+            {formSections.concessions.subsections.map(subsection => (
+              <div className="form-subsection" key={subsection.title}>
+                <h3 className="form-subsection-title">{subsection.title}</h3>
+                {subsection.fields.map(field => {
+                  // Logic to get the correct value from formData state
+                  const [fieldName, subFieldName] = field.name.split('.');
+                  const value = subFieldName 
+                    ? formData.concessions[fieldName][subFieldName] 
+                    : formData.concessions[fieldName];
+
+                  // Conditional rendering
+                  if (field.conditionalField && !formData.concessions[field.conditionalField]) {
+                    return null;
+                  }
+
+                  // Render based on field type
+                  switch (field.type) {
+                    case 'range':
+                      return (
+                        <div className="form-group" key={field.name}>
+                          <label>{field.label}: <span>{value}{field.unit}</span></label>
+                          <input type="range" min={field.min} max={field.max} step={field.step} name={field.name} value={value} onChange={handleConcessionChange} />
+                        </div>
+                      );
+                    case 'toggle':
+                      return (
+                         <div className="form-group" key={field.name}>
+                           {field.group && !subsection.fields.find(f => f.name === field.group.toLowerCase()) && <label>{field.group}</label>}
+                           <ToggleSwitch label={field.label} name={field.name} checked={value} onChange={handleConcessionChange} />
+                         </div>
+                      );
+                    case 'text':
+                       return (
+                         <input type="text" key={field.name} name={field.name} placeholder={field.placeholder} value={value} onChange={handleConcessionChange} className="conditional-textfield" />
+                       );
+                    default:
+                      return null;
+                  }
+                })}
               </div>
-              <div className="form-group">
-                <label>Deferred Payments</label>
-                <ToggleSwitch label="For Software" name="deferredPayments.software" checked={formData.concessions.deferredPayments.software} onChange={handleConcessionChange} />
-                <ToggleSwitch label="For Implementation" name="deferredPayments.implementation" checked={formData.concessions.deferredPayments.implementation} onChange={handleConcessionChange} />
-              </div>
-            </div>
-            <div className="form-subsection">
-              <h3 className="form-subsection-title">Renewal Terms</h3>
-              <div className="form-group">
-                <ToggleSwitch label="Future Discount Lock-in?" name="futureDiscountLock" checked={formData.concessions.futureDiscountLock} onChange={handleConcessionChange} />
-                {formData.concessions.futureDiscountLock && (
-                  <>
-                    <label>Discount Locked-in at: <span>{formData.concessions.futureDiscountLockInValue}%</span></label>
-                    <input type="range" min="0" max="100" step="1" name="futureDiscountLockInValue" value={formData.concessions.futureDiscountLockInValue} onChange={handleConcessionChange} />
-                  </>
-                )}
-              </div>
-              <div className="form-group">
-                <label>Renewal Price Increase Cap: <span>{formData.concessions.renewalPriceIncreaseLock}%</span></label>
-                <input type="range" min="0" max="20" step="1" name="renewalPriceIncreaseLock" value={formData.concessions.renewalPriceIncreaseLock} onChange={handleConcessionChange} />
-              </div>
-            </div>
-            <div className="form-subsection">
-              <h3 className="form-subsection-title">Product, Service & Legal</h3>
-              <div className="form-group">
-                <ToggleSwitch label="Training Credits Included" name="trainingCredits" checked={formData.concessions.trainingCredits} onChange={handleConcessionChange} />
-              </div>
-              <div className="form-group">
-                <ToggleSwitch label="Legal Term Concessions" name="legalTermConcessions" checked={formData.concessions.legalTermConcessions} onChange={handleConcessionChange} />
-                {formData.concessions.legalTermConcessions && (
-                  <input type="text" name="legalConcessionsDetails" placeholder="Briefly describe legal concessions..." value={formData.concessions.legalConcessionsDetails} onChange={handleConcessionChange} className="conditional-textfield" />
-                )}
-              </div>
-            </div>
+            ))}
           </div>
         )}
 
-        {/* --- TAB 3: VENDOR EXPERIENCE --- */}
+{/* --- NEW, REFACTORED Experience TAB --- */}
         {activeTab === 'experience' && (
           <div className="form-section rating-sliders">
-            <div className="form-subsection">
-              <h3 className="form-subsection-title">Presales</h3>
-              <div className="rating-item">
-                <label>Sales Process Quality: <span style={{ color: getScoreColor(formData.ratings.salesProcessRating) }}>{formData.ratings.salesProcessRating}</span></label>
-                <p className="rating-description">How organized, professional, and efficient was the overall sales process?</p>
-                <input type="range" min="1" max="10" name="salesProcessRating" value={formData.ratings.salesProcessRating} onChange={handleRatingChange} />
+            {/* The outer loop creates the subsections and headers */}
+            {formSections.experience.subsections.map(subsection => (
+              <div className="form-subsection" key={subsection.title}>
+                <h3 className="form-subsection-title">{subsection.title}</h3>
+                {/* The inner loop creates the rating sliders within that subsection */}
+                {Object.entries(subsection.fields).map(([fieldKey, fieldData]) => (
+                    <div className="rating-item" key={fieldKey}>
+                        <label>{fieldData.label}: <span style={{ color: getScoreColor(formData.ratings[fieldKey]) }}>{formData.ratings[fieldKey]}</span></label>
+                        <p className="rating-description">{fieldData.description}</p>
+                        <input type="range" min="1" max="10" name={fieldKey} value={formData.ratings[fieldKey]} onChange={handleRatingChange} />
+                    </div>
+                ))}
               </div>
-              <div className="rating-item">
-                <label>Understanding of Needs: <span style={{ color: getScoreColor(formData.ratings.understandingOfNeedsRating) }}>{formData.ratings.understandingOfNeedsRating}</span></label>
-                <p className="rating-description">How well did the sales team understand your specific business challenges and requirements?</p>
-                <input type="range" min="1" max="10" name="understandingOfNeedsRating" value={formData.ratings.understandingOfNeedsRating} onChange={handleRatingChange} />
-              </div>
-              <div className="rating-item">
-                <label>Negotiation Transparency: <span style={{ color: getScoreColor(formData.ratings.negotiationTransparencyRating) }}>{formData.ratings.negotiationTransparencyRating}</span></label>
-                <p className="rating-description">How transparent and fair was the pricing and negotiation process?</p>
-                <input type="range" min="1" max="10" name="negotiationTransparencyRating" value={formData.ratings.negotiationTransparencyRating} onChange={handleRatingChange} />
-              </div>
-            </div>
-            <div className="form-subsection">
-                <h3 className="form-subsection-title">Implementation & Onboarding</h3>
-                <div className="rating-item">
-                    <label>Implementation Process: <span style={{ color: getScoreColor(formData.ratings.implementationRating) }}>{formData.ratings.implementationRating}</span></label>
-                    <p className="rating-description">How smooth and efficient was the implementation and onboarding?</p>
-                    <input type="range" min="1" max="10" name="implementationRating" value={formData.ratings.implementationRating} onChange={handleRatingChange} />
-                </div>
-                <div className="rating-item">
-                    <label>Training & Enablement: <span style={{ color: getScoreColor(formData.ratings.trainingRating) }}>{formData.ratings.trainingRating}</span></label>
-                    <p className="rating-description">Effectiveness of training to get your team running.</p>
-                    <input type="range" min="1" max="10" name="trainingRating" value={formData.ratings.trainingRating} onChange={handleRatingChange} />
-                </div>
-                <div className="rating-item">
-                    <label>Product vs. Promise: <span style={{ color: getScoreColor(formData.ratings.productPromiseRating) }}>{formData.ratings.productPromiseRating}</span></label>
-                    <p className="rating-description">How well the product met the expectations from the sales cycle.</p>
-                    <input type="range" min="1" max="10" name="productPromiseRating" value={formData.ratings.productPromiseRating} onChange={handleRatingChange} />
-                </div>
-            </div>
-            <div className="form-subsection">
-                <h3 className="form-subsection-title">Post-Sales & Relationship</h3>
-                <div className="rating-item">
-                    <label>Customer Support Quality: <span style={{ color: getScoreColor(formData.ratings.supportQualityRating) }}>{formData.ratings.supportQualityRating}</span></label>
-                    <p className="rating-description">Responsiveness and helpfulness of customer support.</p>
-                    <input type="range" min="1" max="10" name="supportQualityRating" value={formData.ratings.supportQualityRating} onChange={handleRatingChange} />
-                </div>
-                <div className="rating-item">
-                    <label>Proactive Success Management: <span style={{ color: getScoreColor(formData.ratings.successManagementRating) }}>{formData.ratings.successManagementRating}</span></label>
-                    <p className="rating-description">Value from your Customer Success or Account Manager.</p>
-                    <input type="range" min="1" max="10" name="successManagementRating" value={formData.ratings.successManagementRating} onChange={handleRatingChange} />
-                </div>
-                <div className="rating-item">
-                    <label>Communication: <span style={{ color: getScoreColor(formData.ratings.communicationRating) }}>{formData.ratings.communicationRating}</span></label>
-                    <p className="rating-description">Effectiveness of vendor communication and updates.</p>
-                    <input type="range" min="1" max="10" name="communicationRating" value={formData.ratings.communicationRating} onChange={handleRatingChange} />
-                </div>
-                <div className="rating-item">
-                    <label>Overall Value & Partnership: <span style={{ color: getScoreColor(formData.ratings.overallValueRating) }}>{formData.ratings.overallValueRating}</span></label>
-                    <p className="rating-description">Overall value for money and likelihood to recommend.</p>
-                    <input type="range" min="1" max="10" name="overallValueRating" value={formData.ratings.overallValueRating} onChange={handleRatingChange} />
-                </div>
-            </div>
+            ))}
           </div>
         )}
+        
         {error && <p className="form-error">{error}</p>}
-        {success && <p className="form-success">{success}</p>}
+        
         <div className="form-actions">
-            {activeTab === 'financial' && (<><button type="submit" className="submit-btn secondary">Submit Financials Only</button><button type="button" onClick={() => setActiveTab('concessions')} className="submit-btn">Move to Tab 2</button></>)}
-            {activeTab === 'concessions' && (<><button type="submit" className="submit-btn secondary">Submit & Finish</button><button type="button" onClick={() => setActiveTab('experience')} className="submit-btn">Move to Tab 3</button></>)}
-            {activeTab === 'experience' && (<button type="submit" className="submit-btn">Submit Full Review</button>)}
-
-            <button type="submit" className="submit-btn">{submissionToEdit ? 'Update Full Review' : 'Submit Full Review'}</button>
-
+            {activeTab === 'financial' && (<><button type="submit" className="submit-btn secondary">Submit Financials Only</button><button type="button" onClick={() => setActiveTab('concessions')} className="submit-btn">Continue</button></>)}
+            {activeTab === 'concessions' && (<><button type="submit" className="submit-btn secondary">Submit & Finish</button><button type="button" onClick={() => setActiveTab('experience')} className="submit-btn">Continue</button></>)}
+            {activeTab === 'experience' && (<button type="submit" className="submit-btn">{submissionToEdit ? 'Update Full Review' : 'Submit Full Review'}</button>)}
         </div>
       </form>
     </div>

@@ -25,6 +25,7 @@ import '../src/components/CompanyCard.css';
 import '../src/components/CategoryBrowser.css';
 import '../src/components/SearchBar.css';
 import '../src/components/SubmissionDetails.css';
+import '../src/components/ValueProps.css';
 
 // Import the component with its correct, exported name
 import { AuthContextProvider } from '../src/context/AuthContext';

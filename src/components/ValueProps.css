@@ -1,0 +1,56 @@
+/* src/components/ValueProps.css */
+.value-props-section {
+  padding: 60px 20px;
+  background-color: #f8f9fa;
+  text-align: center;
+}
+
+.section-title {
+  font-size: 2.5rem;
+  margin-bottom: 40px;
+  color: #343a40;
+}
+
+.value-props-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.value-prop-item {
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.value-prop-icon {
+  font-size: 3rem;
+  line-height: 1;
+  margin-bottom: 20px;
+}
+
+.value-prop-title {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  color: #212529;
+}
+
+.value-prop-description {
+  font-size: 1rem;
+  color: #6c757d;
+  line-height: 1.6;
+}
+
+/* Add this to the end of ValueProps.css */
+.value-props-footer {
+  margin-top: 40px;
+}
+
+.btn-large {
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  font-weight: 600;
+}

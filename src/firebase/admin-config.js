@@ -1,18 +1,26 @@
-import * as admin from 'firebase-admin';
-// This is the critical part: we check if the app is already initialized.
-// This prevents the "already exists" error in development environments.
+import admin from 'firebase-admin';
+
+// The app is initialized ONCE in functions/index.js for production.
+// This file is used by the Next.js pages that run inside that function.
+// We just need to ensure we get the initialized instance.
+
 if (!admin.apps.length) {
+  // This fallback is for your LOCAL environment (`npm run dev`).
+  // It will use the service account key file.
+  // In production, this block is skipped because the app is already initialized.
   try {
+    const serviceAccount = require('../../serviceAccountKey.json');
     admin.initializeApp({
-      credential: admin.credential.cert(
-        JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY)
-      ),
+      credential: admin.credential.cert(serviceAccount)
     });
-  } catch (error) {
-    console.error('Firebase admin initialization error', error.stack);
+  } catch (e) {
+    console.error('Admin SDK initialization error:', e);
+    // If that fails, try initializing without credentials for the production case.
+    admin.initializeApp();
   }
 }
 
-// Export the initialized admin instance's firestore database
 const db = admin.firestore();
-export { db, admin };
+const auth = admin.auth();
+
+export { db, auth, admin };
